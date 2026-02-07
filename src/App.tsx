@@ -86,132 +86,104 @@ function App() {
     setView('prepStep1');
   };
 
+  // Render current view
+  let currentView;
+  
   // Application Flow Routing
   if (view === 'entry') {
-    return (
-      <>
-        <EntryGate 
-          onStart={proceedToStep1} 
-          onWaitlist={joinWaitlist} 
-          onBack={() => {
-              window.scrollTo(0, 0);
-              setView('landing');
-          }}
-        />
-        <Analytics />
-      </>
-    );
-  }
-
-  if (view === 'step1') {
-    return (
-      <>
-        <Step1Eligibility 
-          onNext={handleStep1Complete} 
-          onBack={() => {
-              window.scrollTo(0, 0);
-              setView('entry');
-          }}
-        />
-        <Analytics />
-      </>
-    );
-  }
-
-  // Core Track
-  if (view === 'step2') {
-    return (
-      <>
-        <Step2SkillProof
-          onNext={handleStep2Complete}
-          onBack={() => setView('step1')}
-          skillCategory={applicationData.skillCategory || 'design'} 
-        />
-        <Analytics />
-      </>
-    );
-  }
-
-  if (view === 'step3') {
-    return (
-      <>
-        <Step3Availability
-          onBack={() => setView('step2')}
-          onSubmit={handleStep3Complete}
-        />
-        <Analytics />
-      </>
-    );
-  }
-
-  // Prep Track
-  if (view === 'prepStep1') {
-    return (
-      <>
-        <PrepStep1Context
-          onNext={handlePrepStep1Complete}
-          onBack={() => {
-              if (track === 'prep' && Object.keys(applicationData).length === 0) {
-                   setView('entry'); // Came from "Join Waitlist"
-              } else {
-                   setView('step1'); // Came from Branching
-              }
-          }}
-        />
-        <Analytics />
-      </>
-    );
-  }
-
-  if (view === 'prepStep2') {
-    return (
-      <>
-        <PrepStep2Skill
-          onNext={handlePrepStep2Complete}
-          onBack={() => setView('prepStep1')}
-        />
-        <Analytics />
-      </>
-    );
-  }
-
-  if (view === 'prepStep3') {
-    return (
-      <>
-        <PrepStep3Commitment
-          onBack={() => setView('prepStep2')}
-          onSubmit={handlePrepStep3Complete}
-        />
-        <Analytics />
-      </>
-    );
-  }
-
-  if (view === 'confirmation') {
-    return (
-      <>
-        <SubmissionConfirmation 
-          track={track}
-          onReturnHome={() => {
+    currentView = (
+      <EntryGate 
+        onStart={proceedToStep1} 
+        onWaitlist={joinWaitlist} 
+        onBack={() => {
+            window.scrollTo(0, 0);
             setView('landing');
-            setApplicationData({});
-            setTrack('core');
-          }}
-        />
-        <Analytics />
-      </>
+        }}
+      />
+    );
+  } else if (view === 'step1') {
+    currentView = (
+      <Step1Eligibility 
+        onNext={handleStep1Complete} 
+        onBack={() => {
+            window.scrollTo(0, 0);
+            setView('entry');
+        }}
+      />
+    );
+  } else if (view === 'step2') {
+    // Core Track
+    currentView = (
+      <Step2SkillProof
+        onNext={handleStep2Complete}
+        onBack={() => setView('step1')}
+        skillCategory={applicationData.skillCategory || 'design'} 
+      />
+    );
+  } else if (view === 'step3') {
+    currentView = (
+      <Step3Availability
+        onBack={() => setView('step2')}
+        onSubmit={handleStep3Complete}
+      />
+    );
+  } else if (view === 'prepStep1') {
+    // Prep Track
+    currentView = (
+      <PrepStep1Context
+        onNext={handlePrepStep1Complete}
+        onBack={() => {
+            if (track === 'prep' && Object.keys(applicationData).length === 0) {
+                 setView('entry'); // Came from "Join Waitlist"
+            } else {
+                 setView('step1'); // Came from Branching
+            }
+        }}
+      />
+    );
+  } else if (view === 'prepStep2') {
+    currentView = (
+      <PrepStep2Skill
+        onNext={handlePrepStep2Complete}
+        onBack={() => setView('prepStep1')}
+      />
+    );
+  } else if (view === 'prepStep3') {
+    currentView = (
+      <PrepStep3Commitment
+        onBack={() => setView('prepStep2')}
+        onSubmit={handlePrepStep3Complete}
+      />
+    );
+  } else if (view === 'confirmation') {
+    currentView = (
+      <SubmissionConfirmation 
+        track={track}
+        onReturnHome={() => {
+          setView('landing');
+          setApplicationData({});
+          setTrack('core');
+        }}
+      />
+    );
+  } else {
+    // Landing view
+    currentView = (
+      <div className="min-h-screen bg-white flex flex-col">
+        <Hero onApply={startApplication} onWaitlist={joinWaitlist} />
+        <WhoIsThisFor onApply={startApplication} />
+        <HowItWorks onApply={startApplication} />
+        <WhatWeLookFor onApply={startApplication} onWaitlist={joinWaitlist} />
+        <Footer />
+      </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <Hero onApply={startApplication} onWaitlist={joinWaitlist} />
-      <WhoIsThisFor onApply={startApplication} />
-      <HowItWorks onApply={startApplication} />
-      <WhatWeLookFor onApply={startApplication} onWaitlist={joinWaitlist} />
-      <Footer />
+    <>
+      {currentView}
       <Analytics />
-    </div>
+    </>
   );
 }
 
