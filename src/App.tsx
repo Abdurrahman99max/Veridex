@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { Hero } from './components/landing/Hero';
 import { WhoIsThisFor } from './components/landing/WhoIsThisFor';
 import { HowItWorks } from './components/landing/HowItWorks';
@@ -185,6 +186,7 @@ function App() {
       <HowItWorks onApply={startApplication} />
       <WhatWeLookFor onApply={startApplication} onWaitlist={joinWaitlist} />
       <Footer />
+      <Analytics />
     </div>
   );
 }
