@@ -1,190 +1,132 @@
 import React, { useState } from 'react';
-import { Analytics } from '@vercel/analytics/react';
-import { Hero } from './components/landing/Hero';
-import { WhoIsThisFor } from './components/landing/WhoIsThisFor';
-import { HowItWorks } from './components/landing/HowItWorks';
-import { WhatWeLookFor } from './components/landing/WhatWeLookFor';
-import { Footer } from './components/layout/Footer';
-import { EntryGate } from './components/application/EntryGate';
+import { LandingPage } from './components/landing/LandingPage';
 import { Step1Eligibility } from './components/application/Step1Eligibility';
 import { Step2SkillProof } from './components/application/Step2SkillProof';
-import { Step3Availability } from './components/application/Step3Availability';
-import { SubmissionConfirmation } from './components/application/SubmissionConfirmation';
-import { PrepStep1Context } from './components/application/PrepStep1Context';
-import { PrepStep2Skill } from './components/application/PrepStep2Skill';
-import { PrepStep3Commitment } from './components/application/PrepStep3Commitment';
+import { Step3Commitment } from './components/application/Step3Commitment';
+import { SuccessScreen } from './components/application/SuccessScreen';
+import { motion, AnimatePresence } from 'motion/react';
+import { CheckCircle2, Clock, ArrowRight, Sparkles, UserPlus } from 'lucide-react';
 
-type ViewState = 'landing' | 'entry' | 'step1' | 'step2' | 'step3' | 'prepStep1' | 'prepStep2' | 'prepStep3' | 'confirmation';
-type Track = 'core' | 'prep';
+export default function App() {
+  const [step, setStep] = useState(0); // 0: Landing, 1-3: Application, 4: Success
+  const [track, setTrack] = useState<'core' | 'prep' | null>(null);
+  const [applicationData, setApplicationData] = useState({
+    fullName: '',
+    university: '',
+    email: '',
+    file: null,
+    gradYear: '',
+    skillCategory: '',
+    customSkill: '',
+    proofUrl: '',
+    projectContext: '',
+    rationale: '',
+    commitment: '',
+    confirmedStatus: ''
+  });
 
-function App() {
-  const [view, setView] = useState<ViewState>('landing');
-  const [track, setTrack] = useState<Track>('core');
-  const [applicationData, setApplicationData] = useState<any>({});
-
-  const startApplication = () => {
-    window.scrollTo(0, 0);
-    setView('entry');
-  };
-
-  const proceedToStep1 = () => {
-    window.scrollTo(0, 0);
-    setView('step1');
-  };
-
-  const handleStep1Complete = (data: any) => {
-    setApplicationData({ ...applicationData, ...data });
-    window.scrollTo(0, 0);
+  const nextStep = (newData: any) => {
+    const updatedData = { ...applicationData, ...newData };
+    setApplicationData(updatedData);
     
-    // Branching Logic
-    const prepYears = ['2027', '2028', '2029+'];
-    if (prepYears.includes(data.gradYear)) {
-      setTrack('prep');
-      setView('prepStep1');
-    } else {
-      setTrack('core');
-      setView('step2'); // Route to Core Step 2
+    if (newData.track) {
+      setTrack(newData.track);
     }
+
+    setStep(prev => prev + 1);
   };
 
-  const handleStep2Complete = (data: any) => {
-    setApplicationData({ ...applicationData, ...data });
-    window.scrollTo(0, 0);
-    setView('step3'); 
+  const prevStep = () => {
+    setStep(prev => prev - 1);
   };
 
-  const handleStep3Complete = (data: any) => {
-    setApplicationData({ ...applicationData, ...data });
-    window.scrollTo(0, 0);
-    setView('confirmation');
-  };
-  
-  // Prep Track Handlers
-  const handlePrepStep1Complete = (data: any) => {
-    setApplicationData({ ...applicationData, ...data });
-    window.scrollTo(0, 0);
-    setView('prepStep2');
+  const handleComplete = (finalData: any) => {
+    const completeData = { ...applicationData, ...finalData };
+    setApplicationData(completeData);
+    setStep(4); 
   };
 
-  const handlePrepStep2Complete = (data: any) => {
-    setApplicationData({ ...applicationData, ...data });
-    window.scrollTo(0, 0);
-    setView('prepStep3');
+  const handleApplyCore = () => {
+    setTrack(null);
+    setStep(1);
   };
 
-  const handlePrepStep3Complete = (data: any) => {
-    setApplicationData({ ...applicationData, ...data });
-    window.scrollTo(0, 0);
-    setView('confirmation');
+  const handleJoinPrep = () => {
+    setTrack(null);
+    setStep(1);
   };
-  
-  const joinWaitlist = () => {
-    // Direct entry to Prep Track
-    setTrack('prep');
-    setApplicationData({}); // Clear any previous data
-    window.scrollTo(0, 0);
-    setView('prepStep1');
-  };
-
-  // Render current view
-  let currentView;
-  
-  // Application Flow Routing
-  if (view === 'entry') {
-    currentView = (
-      <EntryGate 
-        onStart={proceedToStep1} 
-        onWaitlist={joinWaitlist} 
-        onBack={() => {
-            window.scrollTo(0, 0);
-            setView('landing');
-        }}
-      />
-    );
-  } else if (view === 'step1') {
-    currentView = (
-      <Step1Eligibility 
-        onNext={handleStep1Complete} 
-        onBack={() => {
-            window.scrollTo(0, 0);
-            setView('entry');
-        }}
-      />
-    );
-  } else if (view === 'step2') {
-    // Core Track
-    currentView = (
-      <Step2SkillProof
-        onNext={handleStep2Complete}
-        onBack={() => setView('step1')}
-        skillCategory={applicationData.skillCategory || 'design'} 
-      />
-    );
-  } else if (view === 'step3') {
-    currentView = (
-      <Step3Availability
-        onBack={() => setView('step2')}
-        onSubmit={handleStep3Complete}
-      />
-    );
-  } else if (view === 'prepStep1') {
-    // Prep Track
-    currentView = (
-      <PrepStep1Context
-        onNext={handlePrepStep1Complete}
-        onBack={() => {
-            if (track === 'prep' && Object.keys(applicationData).length === 0) {
-                 setView('entry'); // Came from "Join Waitlist"
-            } else {
-                 setView('step1'); // Came from Branching
-            }
-        }}
-      />
-    );
-  } else if (view === 'prepStep2') {
-    currentView = (
-      <PrepStep2Skill
-        onNext={handlePrepStep2Complete}
-        onBack={() => setView('prepStep1')}
-      />
-    );
-  } else if (view === 'prepStep3') {
-    currentView = (
-      <PrepStep3Commitment
-        onBack={() => setView('prepStep2')}
-        onSubmit={handlePrepStep3Complete}
-      />
-    );
-  } else if (view === 'confirmation') {
-    currentView = (
-      <SubmissionConfirmation 
-        track={track}
-        onReturnHome={() => {
-          setView('landing');
-          setApplicationData({});
-          setTrack('core');
-        }}
-      />
-    );
-  } else {
-    // Landing view
-    currentView = (
-      <div className="min-h-screen bg-white flex flex-col">
-        <Hero onApply={startApplication} onWaitlist={joinWaitlist} />
-        <WhoIsThisFor onApply={startApplication} />
-        <HowItWorks onApply={startApplication} />
-        <WhatWeLookFor onApply={startApplication} onWaitlist={joinWaitlist} />
-        <Footer />
-      </div>
-    );
-  }
 
   return (
-    <>
-      {currentView}
-      <Analytics />
-    </>
+    <main className="min-h-screen bg-white text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
+      <AnimatePresence mode="wait">
+        {step === 0 && (
+          <motion.div
+            key="landing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <LandingPage 
+              onApply={handleApplyCore} 
+              onWaitlist={handleJoinPrep} 
+            />
+          </motion.div>
+        )}
+
+        {step === 1 && (
+          <motion.div
+            key="step1"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Step1Eligibility onNext={nextStep} onBack={() => setStep(0)} initialPath={track} />
+          </motion.div>
+        )}
+
+        {step === 2 && (
+          <motion.div
+            key="step2"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Step2SkillProof 
+              onNext={nextStep} 
+              onBack={prevStep} 
+              skillCategory={applicationData.skillCategory} 
+              track={track || 'core'}
+            />
+          </motion.div>
+        )}
+
+        {step === 3 && (
+          <motion.div
+            key="step3"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Step3Commitment 
+              onComplete={handleComplete} 
+              onBack={prevStep}
+              prevData={applicationData}
+              track={track || 'core'}
+            />
+          </motion.div>
+        )}
+
+        {step === 4 && (
+          <SuccessScreen 
+            track={track || 'core'} 
+            onReturn={() => setStep(0)} 
+          />
+        )}
+      </AnimatePresence>
+    </main>
   );
 }
-
-export default App;

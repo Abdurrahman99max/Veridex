@@ -1,6 +1,31 @@
-import React, { useState } from 'react';
-import { ArrowRight, CheckCircle2, XCircle, ExternalLink, Info } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  ArrowRight, 
+  ExternalLink, 
+  Code2, 
+  Palette, 
+  FileText, 
+  BarChart3, 
+  Zap,
+  Lock,
+  Terminal,
+  Database,
+  Briefcase,
+  Coins,
+  Settings,
+  Scale,
+  ShieldCheck,
+  UserPlus,
+  CheckCircle2,
+  XCircle
+} from 'lucide-react';
 import { ApplicationLayout } from './ApplicationLayout';
+import { GuidancePopover } from './GuidancePopover';
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Button } from "../ui/button";
+import { Textarea } from "../ui/textarea";
 import {
   Select,
   SelectContent,
@@ -13,200 +38,463 @@ interface Step2Props {
   onNext: (data: any) => void;
   onBack: () => void;
   skillCategory: string;
+  track: 'core' | 'prep';
 }
 
-export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCategory }) => {
-  // Normalize skill category for logic (handle custom inputs vs standard keys)
-  const getSkillType = (skill: string) => {
-    const s = skill.toLowerCase();
-    if (s.includes('design')) return 'design';
-    if (s.includes('dev') || s.includes('soft') || s.includes('engin')) return 'development';
-    if (s.includes('content') || s.includes('writ') || s.includes('copy')) return 'content';
-    return 'generic'; // Fallback for data, marketing, other, etc.
-  };
+type Domain = string | null;
 
-  const skillType = getSkillType(skillCategory);
-
+export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCategory, track }) => {
+  const [selectedDomain, setSelectedDomain] = useState<Domain>(null);
+  const [hasInitialSet, setHasInitialSet] = useState(false);
   const [formData, setFormData] = useState({
-    link: '',
-    projectType: '',
-    explanation: ''
+    proofUrl: '',
+    projectContext: '',
+    rationale: '',
+    confirmedOriginal: false,
+    confirmedManualReview: true, // Auto-confirming this for Core to match previous flow
+    // Prep track specific
+    skillLevel: '',
+    learningMethods: [] as string[],
+    customSkill: ''
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  useEffect(() => {
+    if (skillCategory && !hasInitialSet) {
+      const knownIds = ['design', 'development', 'data', 'product', 'marketing', 'content', 'sales', 'finance', 'operations', 'legal', 'cybersecurity'];
+      if (knownIds.includes(skillCategory)) {
+        setSelectedDomain(skillCategory);
+      } else if (skillCategory) {
+        setSelectedDomain('other');
+        setFormData(prev => ({ ...prev, customSkill: skillCategory }));
+      }
+      setHasInitialSet(true);
+    }
+  }, [skillCategory, hasInitialSet]);
+
+  const domains = [
+    { id: 'design', label: 'Product Design', icon: Palette, tag: 'UI/UX' },
+    { id: 'development', label: 'Software Engineering', icon: Code2, tag: 'SW_ENG' },
+    { id: 'data', label: 'Data Science & Analytics', icon: Database, tag: 'ANALYTICS' },
+    { id: 'product', label: 'Product Management', icon: Zap, tag: 'STRAT' },
+    { id: 'marketing', label: 'Growth Marketing', icon: BarChart3, tag: 'PERF' },
+    { id: 'content', label: 'Content & Copywriting', icon: FileText, tag: 'COMM' },
+    { id: 'sales', label: 'Sales & Business Development', icon: Briefcase, tag: 'GROWTH' },
+    { id: 'finance', label: 'Finance & Accounting', icon: Coins, tag: 'FINTECH' },
+    { id: 'operations', label: 'Operations & Logistics', icon: Settings, tag: 'OPS' },
+    { id: 'legal', label: 'Legal & Compliance', icon: Scale, tag: 'COMPLIANCE' },
+    { id: 'cybersecurity', label: 'Cybersecurity', icon: ShieldCheck, tag: 'CYBER' },
+    { id: 'other', label: 'Other', icon: UserPlus, tag: 'CUSTOM' },
+  ];
+
+  const getAuditContent = (domain: string) => {
+    const contents: Record<string, any> = {
+      design: {
+        label: 'Portfolio / Figma Link',
+        placeholder: 'https://figma.com/file/...',
+        rationalePrompt: 'Explain one specific UX decision and the technical trade-off it required.',
+        acceptable: ['1:1 Figma-to-code parity examples', 'Documented component systems'],
+        rejection: ['Static mockups without flow', 'Template-based portfolios']
+      },
+      development: {
+        label: 'Repository / Live Link',
+        placeholder: 'https://github.com/username/repo',
+        rationalePrompt: 'Describe a specific performance or architectural trade-off you made.',
+        acceptable: ['Production-ready code with README', 'Full-stack application logic'],
+        rejection: ['Tutorial-based repos', 'Incomplete "Hello World" apps']
+      },
+      product: {
+        label: 'PRD / Strategy Doc Link',
+        placeholder: 'https://notion.so/...',
+        rationalePrompt: 'Describe how you prioritized a high-impact feature using technical constraints.',
+        acceptable: ['Comprehensive product requirements', 'Measurable impact data'],
+        rejection: ['Generic feature lists', 'Non-technical strategy docs']
+      },
+      data: {
+        label: 'Notebook / Dashboard Link',
+        placeholder: 'https://colab.google.com/...',
+        rationalePrompt: 'Describe your data cleaning process and the specific model trade-offs.',
+        acceptable: ['Reproducible analysis scripts', 'Clean data visualizations'],
+        rejection: ['CSV files without context', 'Basic Excel charts']
+      },
+      marketing: {
+        label: 'Campaign / Growth Audit Link',
+        placeholder: 'https://drive.google.com/...',
+        rationalePrompt: 'Describe a specific CAC/LTV optimization strategy you executed.',
+        acceptable: ['Performance marketing audits', 'SEO/Growth experiment logs'],
+        rejection: ['Social media screenshots', 'Non-data-backed plans']
+      },
+      content: {
+        label: 'Writing / Strategy Portfolio',
+        placeholder: 'https://medium.com/...',
+        rationalePrompt: 'Explain how you adapted tone for a technical audience and its impact.',
+        acceptable: ['Technical documentation', 'Long-form strategic content'],
+        rejection: ['Personal blog posts', 'Short-form social copy']
+      },
+      sales: {
+        label: 'Case Study / Deck Link',
+        placeholder: 'https://docsend.com/...',
+        rationalePrompt: 'Describe your outreach strategy and conversion funnel optimization.',
+        acceptable: ['Sales process documentation', 'CRM workflow examples'],
+        rejection: ['Cold email templates', 'Generic sales pitches']
+      },
+      other: {
+        label: 'Professional Proof Link',
+        placeholder: 'https://...',
+        rationalePrompt: 'Describe a specific technical or professional execution and its measurable impact.',
+        acceptable: ['Tangible proof of execution', 'Metric-backed professional artifacts'],
+        rejection: ['Educational history only', 'Non-verifiable claims']
+      }
+    };
+    return contents[domain] || contents.other;
   };
 
-  const handleProjectTypeChange = (value: string) => {
-    setFormData(prev => ({ ...prev, projectType: value }));
+  const auditContent = getAuditContent(selectedDomain || 'other');
+
+  const skillLevelOptions = [
+    { value: 'beginner', label: 'Beginner (learning fundamentals)' },
+    { value: 'intermediate', label: 'Intermediate (some projects, not client-ready)' },
+    { value: 'self_taught', label: 'Self-taught, no real projects yet' }
+  ];
+
+  const learningMethods = [
+    { id: 'courses', label: 'Online courses' },
+    { id: 'youtube', label: 'YouTube / self-study' },
+    { id: 'school', label: 'School curriculum' },
+    { id: 'projects', label: 'Practice projects' },
+    { id: 'not_yet', label: 'Not actively learning yet' }
+  ];
+
+  const toggleLearningMethod = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      learningMethods: prev.learningMethods.includes(id)
+        ? prev.learningMethods.filter(m => m !== id)
+        : [...prev.learningMethods, id]
+    }));
   };
 
-  const isValid = formData.link.length > 5 && formData.projectType && formData.explanation.length > 20 && formData.explanation.split(' ').length <= 150;
+  const isCoreValid = 
+    formData.proofUrl.includes('.') && 
+    formData.rationale.trim().split(/\s+/).length >= 20 &&
+    formData.confirmedOriginal;
+
+  const isPrepValid = 
+    selectedDomain !== null &&
+    (selectedDomain !== 'other' || formData.customSkill.trim().length > 0) &&
+    formData.skillLevel !== '' &&
+    formData.learningMethods.length > 0;
 
   const handleSubmit = () => {
-    if (isValid) {
-      onNext(formData);
+    const finalSkill = selectedDomain === 'other' ? formData.customSkill : selectedDomain;
+    if (track === 'core' && isCoreValid) {
+      onNext({ ...formData, skillCategory: finalSkill });
+    } else if (track === 'prep' && isPrepValid) {
+      onNext({ ...formData, skillCategory: finalSkill });
     }
   };
 
-  // Content Configuration based on Skill Type
-  const content = {
-    design: {
-      label: 'Figma Link',
-      placeholder: 'https://www.figma.com/file/...',
-      projectOptions: ['Landing page', 'Onboarding flow', 'Dashboard', 'Mobile App', 'Design System'],
-      good: ['Link to a Figma file with 1–3 completed screens', 'Clear layout and user flow'],
-      bad: ['“I’m currently learning UI/UX”', 'Empty or unfinished files', 'Inspiration-only mockups']
-    },
-    development: {
-      label: 'GitHub Repo / Live Link',
-      placeholder: 'https://github.com/username/repo',
-      projectOptions: ['Full-stack App', 'Frontend Component', 'API / Backend Service', 'Mobile App', 'CLI Tool'],
-      good: ['Clean, runnable code with a README', 'Live deployed demo'],
-      bad: ['“Hello World” tutorials', 'Empty repositories', 'Broken links']
-    },
-    content: {
-      label: 'Portfolio / Doc Link',
-      placeholder: 'https://docs.google.com/...',
-      projectOptions: ['Landing Page Copy', 'Blog Post / Article', 'Email Sequence', 'Social Media Campaign', 'Technical Documentation'],
-      good: ['Published work with clear metrics', 'Professional tone and grammar'],
-      bad: ['Unedited drafts', 'School essays', 'ChatGPT generated text without strategy']
-    },
-    generic: {
-      label: 'Proof of Work Link',
-      placeholder: 'https://...',
-      projectOptions: ['Case Study', 'Live Project', 'Portfolio Item', 'Professional Certification', 'Other'],
-      good: ['Tangible evidence of execution', 'Completed real-world examples'],
-      bad: ['Theoretical knowledge only', 'Course completion certificates', 'Broken or inaccessible links']
-    }
-  }[skillType];
+  const rationaleWordCount = formData.rationale.trim() ? formData.rationale.trim().split(/\s+/).length : 0;
 
-  return (
-    <ApplicationLayout currentStep={2} totalSteps={3} title="Skill Proof" onBack={onBack}>
-      <div className="space-y-10">
-        
-        {/* Dynamic Fields */}
-        <div className="space-y-6">
-            
-            {/* Link Input */}
-            <div className="space-y-2">
-                <label className="block font-inter text-sm font-medium text-slate-700">
-                    {content.label} <span className="text-slate-400 font-normal ml-1">(Public access required)</span>
-                </label>
-                <div className="relative">
-                    <input 
-                        type="url"
-                        name="link"
-                        value={formData.link}
-                        onChange={handleChange}
-                        placeholder={content.placeholder}
-                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all font-inter"
-                        autoFocus
-                    />
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                        <ExternalLink className="w-4 h-4" />
-                    </div>
-                </div>
-            </div>
-
-            {/* Project Type */}
-            <div className="space-y-2">
-                <label className="block font-inter text-sm font-medium text-slate-700">
-                    Project Type
-                </label>
-                <div className="w-full">
-                    <Select value={formData.projectType} onValueChange={handleProjectTypeChange}>
-                      <SelectTrigger className="w-full px-4 py-6 bg-white border-slate-200 rounded-lg text-slate-900 focus:ring-slate-900/5 focus:border-slate-900 font-inter">
-                        <SelectValue placeholder="Select Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {content.projectOptions.map(opt => (
-                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                </div>
-            </div>
-
-            {/* Explanation */}
-            <div className="space-y-2">
-                <div className="flex justify-between items-baseline">
-                    <label className="block font-inter text-sm font-medium text-slate-700">
-                        Explanation
-                    </label>
-                    <span className="text-xs text-slate-400 font-inter">Max 150 words</span>
-                </div>
-                <textarea 
-                    name="explanation"
-                    value={formData.explanation}
-                    onChange={handleChange}
-                    rows={4}
-                    placeholder="Describe one specific decision you made and why it demonstrates task readiness..."
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all font-inter resize-none"
+  if (track === 'prep') {
+    return (
+      <ApplicationLayout currentStep={2} totalSteps={3} title="Skill Direction" onBack={onBack}>
+        <div className="max-w-2xl mx-auto space-y-10 pb-20">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
+            <div className="space-y-4">
+              <h3 className="text-2xl font-urbanist font-bold text-slate-900 leading-tight">What do you want to become task-ready in?</h3>
+              <p className="text-slate-500 text-sm font-inter leading-relaxed">
+                Choose the skill you are actively committing to improve. This helps us design the preparation program.
+              </p>
+              
+              <div className="pt-2">
+                <GuidancePopover 
+                  title="Preparation Goal Guidance"
+                  items={[
+                    { label: "Interest-Led", description: "Select the field you are most curious about and willing to learn from scratch." },
+                    { label: "Market-Driven", description: "Select a field like Development or Data if you want to focus on high-demand technical roles." },
+                    { label: "Execution-Based", description: "Select Design or Content if you enjoy tangible, creative output." }
+                  ]}
+                  footer="You can always pivot your focus as you progress through the track."
                 />
+              </div>
             </div>
-        </div>
 
-        {/* "What Good Looks Like" - Crucial Filter Section */}
-        <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
-            <div className="flex items-center gap-2 mb-4">
-                <Info className="w-4 h-4 text-slate-400" />
-                <h4 className="font-urbanist font-bold text-sm text-slate-900 tracking-wide uppercase">
-                    Evaluation Standards
-                </h4>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Acceptable */}
-                <div className="space-y-3">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-emerald-50 text-emerald-700 text-[11px] font-bold tracking-wider border border-emerald-100 uppercase">
-                        Acceptable
-                    </span>
-                    <ul className="space-y-2">
-                        {content.good.map((item, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm text-slate-600 font-inter leading-tight">
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                                {item}
-                            </li>
-                        ))}
-                    </ul>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label className="text-sm font-urbanist font-bold text-slate-900">Primary Skill You Want to Develop</Label>
+                <Select 
+                  value={selectedDomain || ''} 
+                  onValueChange={(val) => setSelectedDomain(val)}
+                >
+                  <SelectTrigger className="h-14 border-slate-200 focus:ring-slate-900/5 focus:border-slate-900 font-inter bg-white">
+                    <SelectValue placeholder="Select Skill" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {domains.map(opt => (
+                      <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <AnimatePresence>
+                  {selectedDomain === 'other' && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden pt-2"
+                    >
+                      <Input 
+                        value={formData.customSkill}
+                        onChange={(e) => setFormData({...formData, customSkill: e.target.value})}
+                        placeholder="Please specify your skill..."
+                        className="h-12 border-slate-200 focus:border-slate-900 transition-all font-inter bg-white"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-urbanist font-bold text-slate-900">Your current level in this skill</Label>
+                <Select 
+                  value={formData.skillLevel} 
+                  onValueChange={(val) => setFormData({...formData, skillLevel: val})}
+                >
+                  <SelectTrigger className="h-14 border-slate-200 focus:ring-slate-900/5 focus:border-slate-900 font-inter bg-white">
+                    <SelectValue placeholder="Select Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {skillLevelOptions.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-4">
+                <Label className="text-sm font-urbanist font-bold text-slate-900">How are you currently learning this skill?</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {learningMethods.map((method) => (
+                    <button
+                      key={method.id}
+                      onClick={() => toggleLearningMethod(method.id)}
+                      className={`
+                        flex items-center gap-3 p-4 rounded-xl border text-left transition-all cursor-pointer
+                        ${formData.learningMethods.includes(method.id) 
+                          ? 'border-slate-900 bg-white shadow-sm' 
+                          : 'border-slate-100 bg-slate-50/50 hover:border-slate-200'}
+                      `}
+                    >
+                      <div className={`
+                        w-5 h-5 rounded border flex items-center justify-center transition-colors
+                        ${formData.learningMethods.includes(method.id) ? 'bg-slate-900 border-slate-900' : 'bg-white border-slate-200'}
+                      `}>
+                        {formData.learningMethods.includes(method.id) && <div className="w-2 h-2 bg-white rounded-full" />}
+                      </div>
+                      <span className="text-sm font-inter text-slate-700">{method.label}</span>
+                    </button>
+                  ))}
                 </div>
-
-                {/* Unacceptable */}
-                <div className="space-y-3">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-rose-50 text-rose-700 text-[11px] font-bold tracking-wider border border-rose-100 uppercase">
-                        Unacceptable
-                    </span>
-                    <ul className="space-y-2">
-                         {content.bad.map((item, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm text-slate-600 font-inter leading-tight">
-                                <XCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-                                {item}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+              </div>
             </div>
-        </div>
 
-        {/* Action Bar */}
-        <div className="pt-2">
-            <button 
-                onClick={handleSubmit}
-                disabled={!isValid}
-                className={`
-                    w-full flex items-center justify-center gap-2 py-4 rounded-lg font-medium transition-all duration-200
-                    ${isValid 
-                        ? 'bg-[#2C2E3E] text-white hover:bg-[#1f202b] shadow-lg shadow-indigo-500/10' 
-                        : 'bg-slate-100 text-slate-300 cursor-not-allowed'
-                    }
-                `}
+            <Button 
+              onClick={handleSubmit}
+              disabled={!isPrepValid}
+              className={`w-full h-14 rounded-xl shadow-xl transition-all group cursor-pointer font-urbanist font-bold mt-8 ${isPrepValid ? 'bg-slate-900 hover:bg-black text-white' : 'bg-slate-100 text-slate-300'}`}
             >
-                Continue
-                {isValid && <ArrowRight className="w-4 h-4" />}
-            </button>
+              Continue
+              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </motion.div>
         </div>
+      </ApplicationLayout>
+    );
+  }
 
+  // CORE TRACK VIEW 
+  return (
+    <ApplicationLayout currentStep={2} totalSteps={3} title="Skill Proof Protocol" onBack={onBack}>
+      <div className="max-w-2xl mx-auto space-y-12 pb-20">
+        <AnimatePresence mode="wait">
+          {!selectedDomain ? (
+            <motion.div 
+              key="domain-selection"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="space-y-8"
+            >
+              <div className="text-center space-y-3">
+                <h3 className="text-xl font-urbanist font-bold text-slate-900">Select Audit Domain</h3>
+                <p className="text-sm text-slate-500 font-inter">Choose the single skill vertical you will verify.</p>
+                
+                <div className="pt-2">
+                  <GuidancePopover 
+                    title="Audit Vertical Guidance"
+                    items={[
+                      { label: "Design", description: "UI/UX, Product, or Graphic systems." },
+                      { label: "Development", description: "Frontend, Backend, Fullstack, or Web3." },
+                      { label: "Product", description: "Strategy, PRDs, and Constraint management." },
+                      { label: "Growth", description: "Data-backed marketing and funnel optimization." }
+                    ]}
+                    footer="Select the vertical where you have the strongest tangible proof of execution."
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {domains.map((domain) => (
+                  <button
+                    key={domain.id}
+                    onClick={() => setSelectedDomain(domain.id)}
+                    className="flex items-center gap-4 p-5 rounded-xl border border-slate-200 bg-white hover:border-slate-900 hover:shadow-lg transition-all text-left group cursor-pointer"
+                  >
+                    <div className="p-3 rounded-lg bg-slate-50 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                      <domain.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-[9px] font-mono font-bold text-slate-400 tracking-widest uppercase">{domain.tag}</span>
+                      <h4 className="font-urbanist font-bold text-slate-900">{domain.label}</h4>
+                    </div>
+                    <ArrowRight className="ml-auto w-4 h-4 text-slate-300 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="audit-form"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-10"
+            >
+              <div className="p-6 bg-slate-900 rounded-2xl text-white shadow-2xl shadow-slate-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <Terminal className="w-5 h-5 text-indigo-400" />
+                    <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-indigo-400 uppercase">
+                      PROTOCOL: {(selectedDomain === 'other' ? (formData.customSkill || 'CUSTOM') : selectedDomain).toUpperCase()}_AUDIT
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedDomain(null)}
+                    className="text-[10px] font-mono font-bold text-slate-500 hover:text-white transition-colors cursor-pointer"
+                  >
+                    [ CHANGE_DOMAIN ]
+                  </button>
+                </div>
+                <h3 className="text-2xl font-urbanist font-bold mb-2">Technical Submission</h3>
+                <p className="text-slate-400 text-sm font-inter leading-relaxed">
+                  Provide a single, definitive proof of your execution capability.
+                </p>
+              </div>
+
+              <div className="space-y-8">
+                {selectedDomain === 'other' && (
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">SPECIFY SKILL</Label>
+                    <Input 
+                      value={formData.customSkill}
+                      onChange={(e) => setFormData({...formData, customSkill: e.target.value})}
+                      placeholder="e.g. Content Strategy / Web3 Audit"
+                      className="h-14 border-slate-200 focus:border-slate-900 transition-all font-inter bg-white"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3 p-4 rounded-xl border border-emerald-50 bg-emerald-50/10">
+                      <div className="flex items-center gap-2 text-emerald-600">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider">ACCEPTABLE</span>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {auditContent.acceptable.map((item: string, i: number) => (
+                          <li key={i} className="text-xs text-slate-600 font-inter leading-relaxed flex gap-2">
+                            <span className="text-emerald-500 shrink-0">•</span>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="space-y-3 p-4 rounded-xl border border-rose-50 bg-rose-50/10">
+                      <div className="flex items-center gap-2 text-rose-600">
+                        <XCircle className="w-4 h-4" />
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider">REJECTION_CRITERIA</span>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {auditContent.rejection.map((item: string, i: number) => (
+                          <li key={i} className="text-xs text-slate-600 font-inter leading-relaxed flex gap-2">
+                            <span className="text-rose-500 shrink-0">•</span>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">{auditContent.label.toUpperCase()}</Label>
+                    <div className="relative group">
+                      <ExternalLink className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Input 
+                        value={formData.proofUrl}
+                        onChange={(e) => setFormData({...formData, proofUrl: e.target.value})}
+                        placeholder={auditContent.placeholder}
+                        className="pl-12 h-14 border-slate-200 focus:border-slate-900 transition-all font-inter bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-end">
+                      <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">TECHNICAL RATIONALE</Label>
+                      <span className={`text-[10px] font-mono font-bold ${rationaleWordCount < 20 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                        {rationaleWordCount} WORDS (MIN 20)
+                      </span>
+                    </div>
+                    <Textarea 
+                      value={formData.rationale}
+                      onChange={(e) => setFormData({...formData, rationale: e.target.value})}
+                      placeholder={auditContent.rationalePrompt}
+                      className="min-h-[160px] border-slate-200 focus:border-slate-900 transition-all font-inter resize-none leading-relaxed"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    checked={formData.confirmedOriginal}
+                    onChange={(e) => setFormData({...formData, confirmedOriginal: e.target.checked})}
+                    className="mt-1 w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                  />
+                  <div className="space-y-1">
+                    <p className="text-sm font-urbanist font-bold text-slate-900">Original Execution</p>
+                    <p className="text-xs text-slate-500">I certify that this submission represents original work.</p>
+                  </div>
+                </label>
+              </div>
+
+              <Button 
+                onClick={handleSubmit}
+                disabled={!isCoreValid || (selectedDomain === 'other' && !formData.customSkill)}
+                className={`w-full h-14 rounded-xl shadow-xl transition-all font-urbanist font-bold ${isCoreValid && (selectedDomain !== 'other' || formData.customSkill) ? 'bg-slate-900 hover:bg-black text-white shadow-slate-200' : 'bg-slate-100 text-slate-300 shadow-none'}`}
+              >
+                Confirm Technical Submission
+                <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </ApplicationLayout>
   );
