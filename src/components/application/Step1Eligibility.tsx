@@ -157,7 +157,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
       title={selectedPath === 'prep' ? "Context & Intent" : "Eligibility Protocol"} 
       onBack={handleInternalBack}
     >
-      <div className="max-w-2xl mx-auto space-y-12 pb-12">
+      <div className="w-full space-y-8 sm:space-y-12 pb-12">
         
         {!selectedPath && (
           <motion.div 
@@ -165,8 +165,8 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
             animate={{ opacity: 1, y: 0 }}
             className="text-center space-y-4"
           >
-            <div className="space-y-2">
-              <h2 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900">Identify Academic Standing</h2>
+            <div className="space-y-2 px-2">
+              <h2 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900 leading-tight">Identify Academic Standing</h2>
               <p className="text-slate-500 font-inter text-sm max-w-md mx-auto">
                 Select your status to be routed to the appropriate protocol.
               </p>
@@ -174,7 +174,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
           </motion.div>
         )}
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="w-full">
           <AnimatePresence mode="wait">
             {!selectedPath ? (
               <motion.div 
@@ -187,15 +187,15 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button
                     onClick={() => handlePathSelect('core', '2026')}
-                    className="group relative flex flex-col p-6 rounded-xl border border-slate-200 bg-white hover:border-slate-900 hover:shadow-xl hover:shadow-slate-200/50 transition-all text-left cursor-pointer"
+                    className="group relative flex flex-col p-5 sm:p-6 rounded-xl border border-slate-200 bg-white hover:border-slate-900 hover:shadow-xl hover:shadow-slate-200/50 transition-all text-left cursor-pointer active:scale-[0.98]"
                   >
                     <div className="flex justify-between items-start mb-4">
                       <span className="text-[10px] font-mono font-bold tracking-widest text-indigo-600 uppercase bg-indigo-50 px-2 py-1 rounded">
                         CORE ENTRY
                       </span>
                     </div>
-                    <h3 className="text-xl font-urbanist font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">Class of 2026</h3>
-                    <p className="text-sm text-slate-500 font-inter mt-1">Work-ready final-year student</p>
+                    <h3 className="text-lg sm:text-xl font-urbanist font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">Class of 2026</h3>
+                    <p className="text-xs sm:text-sm text-slate-500 font-inter mt-1">Work-ready final-year student</p>
                     <div className="mt-6 flex items-center text-xs font-medium text-slate-400 group-hover:text-slate-900 transition-colors">
                       Begin Audit <ArrowRight className="ml-1 w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                     </div>
@@ -203,15 +203,15 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
 
                   <button
                     onClick={() => handlePathSelect('prep', '')}
-                    className="group relative flex flex-col p-6 rounded-xl border border-slate-200 bg-slate-50/30 hover:bg-white hover:border-slate-900 hover:shadow-xl hover:shadow-slate-200/50 transition-all text-left cursor-pointer border-dashed"
+                    className="group relative flex flex-col p-5 sm:p-6 rounded-xl border border-slate-200 bg-slate-50/30 hover:bg-white hover:border-slate-900 hover:shadow-xl hover:shadow-slate-200/50 transition-all text-left cursor-pointer border-dashed active:scale-[0.98]"
                   >
                     <div className="flex justify-between items-start mb-4">
                       <span className="text-[10px] font-mono font-bold tracking-widest text-amber-600 uppercase bg-amber-50 px-2 py-1 rounded">
                         PREP TRACK
                       </span>
                     </div>
-                    <h3 className="text-xl font-urbanist font-bold text-slate-900">Join Preparation Track</h3>
-                    <p className="text-sm text-slate-500 font-inter mt-1">Penultimate year or building skills</p>
+                    <h3 className="text-lg sm:text-xl font-urbanist font-bold text-slate-900">Join Preparation Track</h3>
+                    <p className="text-xs sm:text-sm text-slate-500 font-inter mt-1">Penultimate year or building skills</p>
                     <div className="mt-6 flex items-center text-xs font-medium text-slate-400 group-hover:text-slate-900 transition-colors">
                       Learn & Grow <ArrowRight className="ml-1 w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                     </div>
@@ -229,8 +229,8 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                   <>
                     {!coreGateConfirmed ? (
                       <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
-                        <div className="bg-slate-900 p-8 rounded-3xl text-white shadow-2xl shadow-slate-200 overflow-hidden relative">
-                          <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12 scale-150">
+                        <div className="bg-slate-900 p-6 sm:p-8 rounded-2xl sm:rounded-3xl text-white shadow-2xl shadow-slate-200 overflow-hidden relative">
+                          <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12 scale-150 hidden sm:block">
                             <ShieldCheck className="w-32 h-32" />
                           </div>
                           
@@ -241,38 +241,38 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                             </div>
 
                             <div className="space-y-2">
-                              <h2 className="text-3xl font-urbanist font-bold leading-tight">Final-Year Eligibility Gate</h2>
-                              <p className="text-slate-400 font-inter leading-relaxed">
+                              <h2 className="text-2xl sm:text-3xl font-urbanist font-bold leading-tight">Final-Year Eligibility Gate</h2>
+                              <p className="text-slate-400 text-sm sm:text-base font-inter leading-relaxed">
                                 Veridex Core is exclusively reserved for students in their <span className="text-white font-bold underline decoration-indigo-500 decoration-2 underline-offset-4">final year of university (Class of 2026)</span>.
                               </p>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-3 py-4">
-                              <div className="flex items-center gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
-                                <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold font-mono text-xs">1</div>
-                                <p className="text-sm font-inter text-slate-300">You must graduate by Summer 2026.</p>
+                            <div className="grid grid-cols-1 gap-3 py-2">
+                              <div className="flex items-center gap-3 p-3 sm:p-4 bg-white/5 rounded-xl border border-white/10">
+                                <div className="shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold font-mono text-xs">1</div>
+                                <p className="text-xs sm:text-sm font-inter text-slate-300">You must graduate by Summer 2026.</p>
                               </div>
-                              <div className="flex items-center gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
-                                <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold font-mono text-xs">2</div>
-                                <p className="text-sm font-inter text-slate-300">Manual verification of enrollment is required.</p>
+                              <div className="flex items-center gap-3 p-3 sm:p-4 bg-white/5 rounded-xl border border-white/10">
+                                <div className="shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold font-mono text-xs">2</div>
+                                <p className="text-xs sm:text-sm font-inter text-slate-300">Manual verification of enrollment is required.</p>
                               </div>
-                              <div className="flex items-center gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
-                                <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold font-mono text-xs">3</div>
-                                <p className="text-sm font-inter text-slate-300">Ineligible profiles will be permanently flagged.</p>
+                              <div className="flex items-center gap-3 p-3 sm:p-4 bg-white/5 rounded-xl border border-white/10">
+                                <div className="shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold font-mono text-xs">3</div>
+                                <p className="text-xs sm:text-sm font-inter text-slate-300">Ineligible profiles will be permanently flagged.</p>
                               </div>
                             </div>
 
-                            <div className="pt-4">
+                            <div className="pt-2">
                               <Button 
                                 onClick={() => setCoreGateConfirmed(true)}
-                                className="w-full h-14 bg-white text-slate-900 hover:bg-slate-100 rounded-xl font-urbanist font-bold transition-all shadow-xl shadow-black/20 group"
+                                className="w-full h-14 bg-white text-slate-900 hover:bg-slate-100 rounded-xl font-urbanist font-bold transition-all shadow-xl shadow-black/20 group text-sm sm:text-base"
                               >
                                 I am a Class of 2026 Student
                                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                               </Button>
                               <button 
                                 onClick={() => setSelectedPath(null)}
-                                className="w-full mt-4 text-xs font-mono font-bold text-slate-500 hover:text-white transition-colors uppercase tracking-widest"
+                                className="w-full mt-6 text-[10px] font-mono font-bold text-slate-500 hover:text-white transition-colors uppercase tracking-widest cursor-pointer py-2"
                               >
                                 [ I am not eligible - Return ]
                               </button>
@@ -282,7 +282,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                       </div>
                     ) : (
                       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="p-6 bg-slate-50 border border-slate-100 rounded-2xl">
+                        <div className="p-4 sm:p-6 bg-slate-50 border border-slate-100 rounded-2xl">
                           <div className="flex items-start gap-4">
                             <div className="p-2 bg-indigo-50 rounded-lg shrink-0 border border-indigo-100">
                               <ShieldCheck className="w-5 h-5 text-indigo-600" />
@@ -292,7 +292,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                                 STATUS: PROTOCOL_ACTIVE
                               </span>
                               <h3 className="text-sm font-urbanist font-bold text-slate-900 mt-1">Verification Data Required</h3>
-                              <p className="text-slate-500 text-xs font-inter mt-1 leading-relaxed">
+                              <p className="text-slate-500 text-[11px] sm:text-xs font-inter mt-1 leading-relaxed">
                                 Please provide accurate details. Your graduation year is locked to 2026 for this track.
                               </p>
                             </div>
@@ -300,9 +300,9 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                         </div>
 
                         <div className="space-y-6">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label className="text-xs font-mono font-bold text-slate-500 uppercase">FULL NAME</Label>
+                              <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">FULL NAME</Label>
                               <Input 
                                 value={formData.fullName}
                                 onChange={(e) => setFormData({...formData, fullName: e.target.value})}
@@ -311,7 +311,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label className="text-xs font-mono font-bold text-slate-500 uppercase">UNIVERSITY</Label>
+                              <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">UNIVERSITY</Label>
                               <Input 
                                 value={formData.university}
                                 onChange={(e) => setFormData({...formData, university: e.target.value})}
@@ -321,8 +321,8 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                             </div>
                           </div>
 
-                          <div className="space-y-4">
-                            <Label className="text-xs font-mono font-bold text-slate-500 uppercase">PRIMARY SKILL CATEGORY</Label>
+                          <div className="space-y-3">
+                            <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">PRIMARY SKILL CATEGORY</Label>
                             <Select 
                               value={formData.skillCategory} 
                               onValueChange={(val) => setFormData({...formData, skillCategory: val})}
@@ -338,33 +338,33 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                             </Select>
                           </div>
 
-                          <div className="space-y-6 pt-4 border-t border-slate-100">
+                          <div className="space-y-6 pt-6 border-t border-slate-100">
                             <div className="space-y-1">
-                              <Label className="text-xs font-mono font-bold text-slate-500 uppercase">VERIFICATION METHOD</Label>
-                              <p className="text-xs text-slate-400 font-inter">Identify using one of the two protocols below.</p>
+                              <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">VERIFICATION METHOD</Label>
+                              <p className="text-[11px] sm:text-xs text-slate-400 font-inter">Identify using one of the two protocols below.</p>
                             </div>
                             
                             <div className="grid grid-cols-1 gap-4">
-                              <div className={`relative group p-1 rounded-xl transition-all border ${isEmailProvided ? 'border-indigo-500 bg-indigo-50/10' : 'border-transparent'}`}>
+                              <div className={`relative group p-0.5 rounded-xl transition-all border ${isEmailProvided ? 'border-indigo-500 bg-indigo-50/10' : 'border-transparent'}`}>
                                 <div className="relative">
                                   <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isEmailProvided ? 'text-indigo-500' : 'text-slate-400'}`} />
                                   <Input 
                                     type="email"
                                     value={formData.email}
                                     onChange={(e) => setFormData({...formData, email: e.target.value, file: null})}
-                                    placeholder="School-issued email (Recommended)"
+                                    placeholder="School email (Recommended)"
                                     className={`pl-12 h-14 border-slate-200 transition-all font-inter bg-white focus:border-slate-900 ${isEmailProvided ? 'border-indigo-200' : ''}`}
                                   />
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-4 py-2">
+                              <div className="flex items-center gap-4 py-1">
                                 <div className="flex-1 h-px bg-slate-100" />
-                                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest px-2">OR</span>
+                                <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest px-2">OR</span>
                                 <div className="flex-1 h-px bg-slate-100" />
                               </div>
 
-                              <label className={`relative cursor-pointer group flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-all ${isFileProvided ? 'border-indigo-500 bg-indigo-50/30' : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50/50'}`}>
+                              <label className={`relative cursor-pointer group flex flex-col items-center justify-center p-6 sm:p-8 border-2 border-dashed rounded-xl transition-all ${isFileProvided ? 'border-indigo-500 bg-indigo-50/30' : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50/50'}`}>
                                 <input 
                                   type="file" 
                                   className="hidden" 
@@ -374,15 +374,15 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                                   <div className="flex items-center gap-3">
                                     <FileText className="w-6 h-6 text-indigo-600" />
                                     <div className="text-left">
-                                      <p className="text-sm font-urbanist font-bold text-slate-900">{formData.file?.name}</p>
-                                      <p className="text-xs text-slate-500">Document proof attached</p>
+                                      <p className="text-sm font-urbanist font-bold text-slate-900 max-w-[150px] sm:max-w-none truncate">{formData.file?.name}</p>
+                                      <p className="text-[10px] text-slate-500 uppercase font-mono tracking-tight">DOCUMENT_PROOF_ATTACHED</p>
                                     </div>
                                   </div>
                                 ) : (
                                   <div className="text-center space-y-2">
                                     <Upload className="w-5 h-5 text-slate-400 mx-auto" />
                                     <p className="text-sm font-urbanist font-bold text-slate-900">Upload Status Proof</p>
-                                    <p className="text-xs text-slate-400 font-inter">Portal Screenshot or Enrollment Letter</p>
+                                    <p className="text-[11px] text-slate-400 font-inter">Portal Screenshot or Enrollment Letter</p>
                                   </div>
                                 )}
                               </label>
@@ -392,7 +392,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                           <Button 
                             onClick={handleContinue}
                             disabled={!isCoreValid}
-                            className={`w-full h-14 rounded-xl shadow-xl transition-all group cursor-pointer ${isCoreValid ? 'bg-slate-900 hover:bg-black text-white shadow-slate-200' : 'bg-slate-100 text-slate-300 shadow-none'}`}
+                            className={`w-full h-14 rounded-xl shadow-xl transition-all group cursor-pointer text-sm sm:text-base ${isCoreValid ? 'bg-slate-900 hover:bg-black text-white shadow-slate-200' : 'bg-slate-100 text-slate-300 shadow-none'}`}
                           >
                             Verify Status & Continue
                             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -405,15 +405,15 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
 
                 {selectedPath === 'prep' && (
                   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="p-6 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
+                    <div className="p-5 sm:p-6 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
                       <div className="flex items-start gap-4">
-                        <div className="p-2 bg-white rounded-lg border border-indigo-100">
+                        <div className="p-2 bg-white rounded-lg border border-indigo-100 shrink-0">
                           <Info className="w-5 h-5 text-indigo-500" />
                         </div>
                         <div>
                           <h4 className="text-sm font-urbanist font-bold text-slate-900">Preparation Track Application</h4>
-                          <p className="text-slate-500 text-xs font-inter mt-1 leading-relaxed">
-                            This track is for students who want to become task-ready before applying to Veridex. <br />
+                          <p className="text-slate-500 text-[11px] sm:text-xs font-inter mt-1 leading-relaxed">
+                            This track is for students who want to become task-ready before applying to Veridex. <br className="hidden sm:block" />
                             <span className="font-bold">This is not the Veridex Core application.</span>
                           </p>
                         </div>
@@ -477,7 +477,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-urbanist font-bold text-slate-900">Why are you applying to the Preparation Track?</Label>
+                        <Label className="text-sm font-urbanist font-bold text-slate-900">Application Reason</Label>
                         <Select 
                           value={formData.motivation} 
                           onValueChange={(val) => setFormData({...formData, motivation: val})}
@@ -496,7 +496,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                       <Button 
                         onClick={handleContinue}
                         disabled={!isPrepValid}
-                        className={`w-full h-14 rounded-xl shadow-xl transition-all group cursor-pointer font-urbanist font-bold ${isPrepValid ? 'bg-slate-900 hover:bg-black text-white' : 'bg-slate-100 text-slate-300'}`}
+                        className={`w-full h-14 rounded-xl shadow-xl transition-all group cursor-pointer font-urbanist font-bold text-sm sm:text-base ${isPrepValid ? 'bg-slate-900 hover:bg-black text-white' : 'bg-slate-100 text-slate-300'}`}
                       >
                         Continue
                         <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />

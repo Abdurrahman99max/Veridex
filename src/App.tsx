@@ -6,7 +6,6 @@ import { Step3Commitment } from './components/application/Step3Commitment';
 import { SuccessScreen } from './components/application/SuccessScreen';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, Clock, ArrowRight, Sparkles, UserPlus } from 'lucide-react';
-import { SpeedInsights } from '@vercel/speed-insights/react';
 
 export default function App() {
   const [step, setStep] = useState(0); // 0: Landing, 1-3: Application, 4: Success
@@ -128,7 +127,6 @@ export default function App() {
           />
         )}
       </AnimatePresence>
-      <SpeedInsights />
     </main>
   );
 }

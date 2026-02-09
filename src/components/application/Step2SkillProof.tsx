@@ -198,14 +198,14 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
   if (track === 'prep') {
     return (
       <ApplicationLayout currentStep={2} totalSteps={3} title="Skill Direction" onBack={onBack}>
-        <div className="max-w-2xl mx-auto space-y-10 pb-20">
+        <div className="w-full space-y-8 sm:space-y-10 pb-20">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="space-y-8"
           >
             <div className="space-y-4">
-              <h3 className="text-2xl font-urbanist font-bold text-slate-900 leading-tight">What do you want to become task-ready in?</h3>
+              <h3 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900 leading-tight">What do you want to become task-ready in?</h3>
               <p className="text-slate-500 text-sm font-inter leading-relaxed">
                 Choose the skill you are actively committing to improve. This helps us design the preparation program.
               </p>
@@ -278,20 +278,20 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
 
               <div className="space-y-4">
                 <Label className="text-sm font-urbanist font-bold text-slate-900">How are you currently learning this skill?</Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {learningMethods.map((method) => (
                     <button
                       key={method.id}
                       onClick={() => toggleLearningMethod(method.id)}
                       className={`
-                        flex items-center gap-3 p-4 rounded-xl border text-left transition-all cursor-pointer
+                        flex items-center gap-3 p-4 rounded-xl border text-left transition-all cursor-pointer active:scale-[0.98]
                         ${formData.learningMethods.includes(method.id) 
                           ? 'border-slate-900 bg-white shadow-sm' 
                           : 'border-slate-100 bg-slate-50/50 hover:border-slate-200'}
                       `}
                     >
                       <div className={`
-                        w-5 h-5 rounded border flex items-center justify-center transition-colors
+                        shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors
                         ${formData.learningMethods.includes(method.id) ? 'bg-slate-900 border-slate-900' : 'bg-white border-slate-200'}
                       `}>
                         {formData.learningMethods.includes(method.id) && <div className="w-2 h-2 bg-white rounded-full" />}
@@ -306,7 +306,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
             <Button 
               onClick={handleSubmit}
               disabled={!isPrepValid}
-              className={`w-full h-14 rounded-xl shadow-xl transition-all group cursor-pointer font-urbanist font-bold mt-8 ${isPrepValid ? 'bg-slate-900 hover:bg-black text-white' : 'bg-slate-100 text-slate-300'}`}
+              className={`w-full h-14 rounded-xl shadow-xl transition-all group cursor-pointer font-urbanist font-bold mt-4 sm:mt-8 text-sm sm:text-base ${isPrepValid ? 'bg-slate-900 hover:bg-black text-white' : 'bg-slate-100 text-slate-300'}`}
             >
               Continue
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -320,7 +320,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
   // CORE TRACK VIEW 
   return (
     <ApplicationLayout currentStep={2} totalSteps={3} title="Skill Proof Protocol" onBack={onBack}>
-      <div className="max-w-2xl mx-auto space-y-12 pb-20">
+      <div className="w-full space-y-12 pb-20">
         <AnimatePresence mode="wait">
           {!selectedDomain ? (
             <motion.div 
@@ -330,7 +330,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
               exit={{ opacity: 0, scale: 0.98 }}
               className="space-y-8"
             >
-              <div className="text-center space-y-3">
+              <div className="text-center space-y-3 px-2">
                 <h3 className="text-xl font-urbanist font-bold text-slate-900">Select Audit Domain</h3>
                 <p className="text-sm text-slate-500 font-inter">Choose the single skill vertical you will verify.</p>
                 
@@ -352,16 +352,16 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
                   <button
                     key={domain.id}
                     onClick={() => setSelectedDomain(domain.id)}
-                    className="flex items-center gap-4 p-5 rounded-xl border border-slate-200 bg-white hover:border-slate-900 hover:shadow-lg transition-all text-left group cursor-pointer"
+                    className="flex items-center gap-4 p-4 sm:p-5 rounded-xl border border-slate-200 bg-white hover:border-slate-900 hover:shadow-lg transition-all text-left group cursor-pointer active:scale-[0.98]"
                   >
-                    <div className="p-3 rounded-lg bg-slate-50 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                    <div className="shrink-0 p-3 rounded-lg bg-slate-50 group-hover:bg-slate-900 group-hover:text-white transition-colors">
                       <domain.icon className="w-5 h-5" />
                     </div>
-                    <div>
-                      <span className="text-[9px] font-mono font-bold text-slate-400 tracking-widest uppercase">{domain.tag}</span>
-                      <h4 className="font-urbanist font-bold text-slate-900">{domain.label}</h4>
+                    <div className="min-w-0">
+                      <span className="block text-[9px] font-mono font-bold text-slate-400 tracking-widest uppercase truncate">{domain.tag}</span>
+                      <h4 className="font-urbanist font-bold text-slate-900 text-sm sm:text-base truncate">{domain.label}</h4>
                     </div>
-                    <ArrowRight className="ml-auto w-4 h-4 text-slate-300 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="ml-auto shrink-0 w-4 h-4 text-slate-300 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
                   </button>
                 ))}
               </div>
@@ -373,23 +373,23 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
               animate={{ opacity: 1, y: 0 }}
               className="space-y-10"
             >
-              <div className="p-6 bg-slate-900 rounded-2xl text-white shadow-2xl shadow-slate-200">
-                <div className="flex items-center justify-between mb-4">
+              <div className="p-6 sm:p-8 bg-slate-900 rounded-2xl text-white shadow-2xl shadow-slate-200">
+                <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <Terminal className="w-5 h-5 text-indigo-400" />
-                    <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-indigo-400 uppercase">
+                    <Terminal className="w-5 h-5 text-indigo-400 shrink-0" />
+                    <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-indigo-400 uppercase truncate max-w-[150px] sm:max-w-none">
                       PROTOCOL: {(selectedDomain === 'other' ? (formData.customSkill || 'CUSTOM') : selectedDomain).toUpperCase()}_AUDIT
                     </span>
                   </div>
                   <button 
                     onClick={() => setSelectedDomain(null)}
-                    className="text-[10px] font-mono font-bold text-slate-500 hover:text-white transition-colors cursor-pointer"
+                    className="shrink-0 text-[10px] font-mono font-bold text-slate-500 hover:text-white transition-colors cursor-pointer py-1 px-2 -mr-2"
                   >
-                    [ CHANGE_DOMAIN ]
+                    [ CHANGE ]
                   </button>
                 </div>
-                <h3 className="text-2xl font-urbanist font-bold mb-2">Technical Submission</h3>
-                <p className="text-slate-400 text-sm font-inter leading-relaxed">
+                <h3 className="text-xl sm:text-2xl font-urbanist font-bold mb-2">Technical Submission</h3>
+                <p className="text-slate-400 text-xs sm:text-sm font-inter leading-relaxed">
                   Provide a single, definitive proof of your execution capability.
                 </p>
               </div>
@@ -408,7 +408,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
                 )}
 
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-3 p-4 rounded-xl border border-emerald-50 bg-emerald-50/10">
                       <div className="flex items-center gap-2 text-emerald-600">
                         <CheckCircle2 className="w-4 h-4" />
@@ -416,7 +416,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
                       </div>
                       <ul className="space-y-1.5">
                         {auditContent.acceptable.map((item: string, i: number) => (
-                          <li key={i} className="text-xs text-slate-600 font-inter leading-relaxed flex gap-2">
+                          <li key={i} className="text-[11px] sm:text-xs text-slate-600 font-inter leading-relaxed flex gap-2">
                             <span className="text-emerald-500 shrink-0">•</span>
                             {item}
                           </li>
@@ -430,7 +430,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
                       </div>
                       <ul className="space-y-1.5">
                         {auditContent.rejection.map((item: string, i: number) => (
-                          <li key={i} className="text-xs text-slate-600 font-inter leading-relaxed flex gap-2">
+                          <li key={i} className="text-[11px] sm:text-xs text-slate-600 font-inter leading-relaxed flex gap-2">
                             <span className="text-rose-500 shrink-0">•</span>
                             {item}
                           </li>
@@ -453,7 +453,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex justify-between items-end">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-1">
                       <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">TECHNICAL RATIONALE</Label>
                       <span className={`text-[10px] font-mono font-bold ${rationaleWordCount < 20 ? 'text-rose-500' : 'text-emerald-500'}`}>
                         {rationaleWordCount} WORDS (MIN 20)
@@ -463,7 +463,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
                       value={formData.rationale}
                       onChange={(e) => setFormData({...formData, rationale: e.target.value})}
                       placeholder={auditContent.rationalePrompt}
-                      className="min-h-[160px] border-slate-200 focus:border-slate-900 transition-all font-inter resize-none leading-relaxed"
+                      className="min-h-[160px] border-slate-200 focus:border-slate-900 transition-all font-inter resize-none leading-relaxed text-sm sm:text-base"
                     />
                   </div>
                 </div>
@@ -475,11 +475,11 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
                     type="checkbox" 
                     checked={formData.confirmedOriginal}
                     onChange={(e) => setFormData({...formData, confirmedOriginal: e.target.checked})}
-                    className="mt-1 w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                    className="shrink-0 mt-1 w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                   />
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <p className="text-sm font-urbanist font-bold text-slate-900">Original Execution</p>
-                    <p className="text-xs text-slate-500">I certify that this submission represents original work.</p>
+                    <p className="text-[11px] sm:text-xs text-slate-500 leading-tight">I certify that this submission represents original work.</p>
                   </div>
                 </label>
               </div>
@@ -487,10 +487,10 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
               <Button 
                 onClick={handleSubmit}
                 disabled={!isCoreValid || (selectedDomain === 'other' && !formData.customSkill)}
-                className={`w-full h-14 rounded-xl shadow-xl transition-all font-urbanist font-bold ${isCoreValid && (selectedDomain !== 'other' || formData.customSkill) ? 'bg-slate-900 hover:bg-black text-white shadow-slate-200' : 'bg-slate-100 text-slate-300 shadow-none'}`}
+                className={`w-full h-14 rounded-xl shadow-xl transition-all font-urbanist font-bold text-sm sm:text-base ${isCoreValid && (selectedDomain !== 'other' || formData.customSkill) ? 'bg-slate-900 hover:bg-black text-white shadow-slate-200' : 'bg-slate-100 text-slate-300 shadow-none'}`}
               >
                 Confirm Technical Submission
-                <ArrowRight className="ml-2 w-4 h-4" />
+                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </motion.div>
           )}

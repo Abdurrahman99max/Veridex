@@ -92,20 +92,20 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ track, onReturn })
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="bg-white p-10 md:p-12 rounded-3xl border border-slate-200 shadow-2xl shadow-slate-200/50 text-center space-y-8 relative"
+            className="bg-white p-6 sm:p-10 md:p-12 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl shadow-slate-200/50 text-center space-y-6 sm:space-y-8 relative"
           >
             <ParticleBurst />
             
             {track === 'core' ? (
-              <div className="space-y-8">
+              <div className="space-y-6 sm:space-y-8">
                 <div className="relative inline-block">
                   <motion.div 
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", damping: 12 }}
-                    className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-xl shadow-indigo-100"
+                    className="w-16 h-16 sm:w-20 sm:h-20 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-xl shadow-indigo-100"
                   >
-                    <ShieldCheck className="w-10 h-10 text-white" />
+                    <ShieldCheck className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                   </motion.div>
                   <motion.div 
                     animate={{ rotate: 360 }}
@@ -114,68 +114,68 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ track, onReturn })
                   />
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 rounded-full border border-indigo-100">
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                    <span className="text-[10px] font-mono font-bold tracking-widest text-indigo-600 uppercase">
+                    <span className="text-[9px] sm:text-[10px] font-mono font-bold tracking-widest text-indigo-600 uppercase">
                       PROTOCOL: CORE_AUDIT_PENDING
                     </span>
                   </div>
-                  <h2 className="text-3xl font-urbanist font-bold text-slate-900 tracking-tight">Application Transmitted</h2>
-                  <p className="text-slate-500 font-inter leading-relaxed max-w-sm mx-auto text-sm">
+                  <h2 className="text-2xl sm:text-3xl font-urbanist font-bold text-slate-900 tracking-tight">Application Transmitted</h2>
+                  <p className="text-slate-500 font-inter leading-relaxed max-w-sm mx-auto text-xs sm:text-sm">
                     Your technical artifacts have been hashed and entered into the manual review queue. We'll notify you once the audit protocol is complete.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-left p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-mono font-bold text-slate-400 uppercase">QUEUE_HASH</p>
-                    <p className="text-sm font-urbanist font-bold text-slate-900 truncate">VX-2026-{Math.random().toString(36).substring(7).toUpperCase()}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-left p-4 sm:p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div className="space-y-1 min-w-0">
+                    <p className="text-[9px] font-mono font-bold text-slate-400 uppercase">QUEUE_HASH</p>
+                    <p className="text-xs sm:text-sm font-urbanist font-bold text-slate-900 truncate">VX-2026-{Math.random().toString(36).substring(7).toUpperCase()}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[10px] font-mono font-bold text-slate-400 uppercase">EST_AUDIT_TIME</p>
-                    <p className="text-sm font-urbanist font-bold text-slate-900">48-72 Hours</p>
+                    <p className="text-[9px] font-mono font-bold text-slate-400 uppercase">EST_AUDIT_TIME</p>
+                    <p className="text-xs sm:text-sm font-urbanist font-bold text-slate-900">48-72 Hours</p>
                   </div>
                 </div>
 
                 <Button 
                   onClick={onReturn}
-                  className="w-full h-14 bg-slate-900 text-white rounded-xl font-urbanist font-bold hover:bg-black transition-all cursor-pointer shadow-lg shadow-slate-200 group"
+                  className="w-full h-14 bg-slate-900 text-white rounded-xl font-urbanist font-bold hover:bg-black transition-all cursor-pointer shadow-lg shadow-slate-200 group text-sm sm:text-base"
                 >
                   Return to Command Center
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-6 sm:space-y-8">
                 <motion.div 
                   initial={{ rotate: -10, scale: 0.8 }}
                   animate={{ rotate: 0, scale: 1 }}
                   transition={{ type: "spring", damping: 10 }}
-                  className="w-20 h-20 bg-amber-500 rounded-2xl flex items-center justify-center mx-auto shadow-xl shadow-amber-100"
+                  className="w-16 h-16 sm:w-20 sm:h-20 bg-amber-500 rounded-2xl flex items-center justify-center mx-auto shadow-xl shadow-amber-100"
                 >
-                  <Sparkles className="w-10 h-10 text-white" />
+                  <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                 </motion.div>
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 rounded-full border border-amber-100">
-                    <span className="text-[10px] font-mono font-bold tracking-widest text-amber-600 uppercase">
+                    <span className="text-[9px] sm:text-[10px] font-mono font-bold tracking-widest text-amber-600 uppercase">
                       STATUS: PREP_TRACK_QUEUED
                     </span>
                   </div>
-                  <h2 className="text-3xl font-urbanist font-bold text-slate-900 tracking-tight">Ready for Growth</h2>
-                  <p className="text-slate-500 font-inter leading-relaxed max-w-sm mx-auto text-sm">
+                  <h2 className="text-2xl sm:text-3xl font-urbanist font-bold text-slate-900 tracking-tight">Ready for Growth</h2>
+                  <p className="text-slate-500 font-inter leading-relaxed max-w-sm mx-auto text-xs sm:text-sm">
                     You've been successfully registered for the <span className="text-slate-900 font-bold underline decoration-amber-200 decoration-4 underline-offset-4">Preparation Track</span>. We'll reach out when the next cohort begins.
                   </p>
                 </div>
 
-                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+                <div className="p-4 sm:p-6 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-left">
-                      <p className="text-[10px] font-mono font-bold text-slate-400 uppercase">NEXT STEP</p>
-                      <p className="text-sm font-urbanist font-bold text-slate-900">Watch for Cohort Email</p>
+                    <div className="text-left min-w-0">
+                      <p className="text-[9px] font-mono font-bold text-slate-400 uppercase">NEXT STEP</p>
+                      <p className="text-xs sm:text-sm font-urbanist font-bold text-slate-900">Watch for Cohort Email</p>
                     </div>
-                    <div className="p-2 bg-white rounded-lg border border-slate-200">
+                    <div className="shrink-0 p-2 bg-white rounded-lg border border-slate-200">
                       <ExternalLink className="w-4 h-4 text-slate-400" />
                     </div>
                   </div>
@@ -183,7 +183,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ track, onReturn })
 
                 <Button 
                   onClick={onReturn}
-                  className="w-full h-14 bg-slate-900 text-white rounded-xl font-urbanist font-bold hover:bg-black transition-all cursor-pointer shadow-lg shadow-slate-200 group"
+                  className="w-full h-14 bg-slate-900 text-white rounded-xl font-urbanist font-bold hover:bg-black transition-all cursor-pointer shadow-lg shadow-slate-200 group text-sm sm:text-base"
                 >
                   Return to Dashboard
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />

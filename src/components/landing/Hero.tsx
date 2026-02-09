@@ -97,13 +97,13 @@ export const Hero = ({ onApply, onWaitlist }: HeroProps) => {
         </div>
 
         {/* Headline */}
-        <h1 className="font-urbanist font-bold text-3xl sm:text-4xl md:text-6xl lg:text-[72px] leading-[1.1] tracking-tight text-slate-900 mb-6 max-w-4xl drop-shadow-sm">
+        <h1 className="font-urbanist font-bold text-3xl sm:text-4xl md:text-6xl lg:text-[72px] leading-[1.1] tracking-tight text-slate-900 mb-6 max-w-4xl drop-shadow-sm px-2">
           Trusted work experience — <br className="hidden sm:block" />
           before you graduate.
         </h1>
 
         {/* Subheadline */}
-        <p className="font-inter text-base sm:text-lg md:text-xl text-slate-500 max-w-2xl leading-relaxed mb-8 sm:mb-10 px-4 sm:px-0">
+        <p className="font-inter text-base sm:text-lg md:text-xl text-slate-500 max-w-2xl leading-relaxed mb-8 sm:mb-10 px-6 sm:px-0">
           Veridex is a vetted platform for final-year university students with task-ready skills to complete paid tasks and earn employer trust before graduation.
         </p>
 
