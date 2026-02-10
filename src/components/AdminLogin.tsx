@@ -23,6 +23,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
     }
     
     setIsLoading(true);
+    const normalizedEmail = email.toLowerCase().trim();
     try {
       const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/request-otp`, {
         method: 'POST',
@@ -30,7 +31,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${publicAnonKey}`
         },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email: normalizedEmail })
       });
       
       const data = await response.json();
@@ -75,6 +76,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
 
   const handleOtpSubmit = async () => {
     setIsLoading(true);
+    const normalizedEmail = email.toLowerCase().trim();
     try {
       const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/verify-otp`, {
         method: 'POST',
@@ -82,13 +84,13 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${publicAnonKey}`
         },
-        body: JSON.stringify({ email, code: otp.join('') })
+        body: JSON.stringify({ email: normalizedEmail, code: otp.join('') })
       });
       
       const data = await response.json();
       if (data.success) {
         toast.success('Access Granted. Opening Ghost Hub.');
-        onSuccess(data.token, email);
+        onSuccess(data.token, normalizedEmail);
       } else {
         toast.error(data.error || 'Invalid Protocol Code');
         setOtp(['', '', '', '', '', '']);

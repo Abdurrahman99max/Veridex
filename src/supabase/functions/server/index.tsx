@@ -24,7 +24,7 @@ app.use(
 );
 
 const prefix = "/make-server-45707f2b";
-const MASTER_ADMIN = "Onitiloabdurrahman@gmail.com";
+const MASTER_ADMIN = "onitiloabdurrahman@gmail.com";
 
 // --- MIDDLEWARE & UTILS ---
 const getSupabase = () => {
@@ -40,16 +40,18 @@ const getSupabase = () => {
 app.post(`${prefix}/submit-application`, async (c) => {
   try {
     const data = await c.req.json();
+    const email = data.email.toLowerCase();
     const id = `VX-${data.track === 'core' ? 'C' : 'P'}-${Math.random().toString(36).substring(7).toUpperCase()}`;
     
     // Auto-tagging logic
     const tags = [];
-    if (data.email.endsWith('.edu') || data.email.endsWith('.edu.ng')) tags.push('UNIVERSITY MAIL');
+    if (email.endsWith('.edu') || email.endsWith('.edu.ng')) tags.push('UNIVERSITY MAIL');
     if (data.rationale && data.rationale.length > 100) tags.push('DETAILED PROTOCOL');
     if (data.track === 'core') tags.push('STEADY PROTOCOL');
     
     const applicant = {
       ...data,
+      email,
       id,
       status: 'pending',
       submittedAt: new Date().toISOString(),
@@ -73,7 +75,8 @@ app.post(`${prefix}/submit-application`, async (c) => {
 // 2. Admin Whitelist Check & OTP Trigger (Integrated with Resend)
 app.post(`${prefix}/admin/request-otp`, async (c) => {
   try {
-    const { email } = await c.req.json();
+    const body = await c.req.json();
+    const email = body.email.toLowerCase();
     
     // Check whitelist in KV, default to MASTER_ADMIN
     const whitelist = (await kv.get('admin_whitelist')) || [MASTER_ADMIN];
@@ -115,7 +118,7 @@ app.post(`${prefix}/admin/request-otp`, async (c) => {
 
     if (error) {
       console.error('Email error:', error);
-      return c.json({ success: false, error: 'Failed to deliver protocol' }, 500);
+      return c.json({ success: false, error: 'Failed to deliver protocol. Resend verification required.' }, 500);
     }
 
     console.log(`[AUTH] Protocol sent to ${email}`);
@@ -129,7 +132,9 @@ app.post(`${prefix}/admin/request-otp`, async (c) => {
 // 3. Admin Verify OTP
 app.post(`${prefix}/admin/verify-otp`, async (c) => {
   try {
-    const { email, code } = await c.req.json();
+    const body = await c.req.json();
+    const email = body.email.toLowerCase();
+    const code = body.code;
     const stored = await kv.get(`otp:${email}`);
     
     if (stored && stored.code === code && stored.expires > Date.now()) {
