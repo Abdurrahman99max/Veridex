@@ -2,9 +2,11 @@ import { Hono } from "npm:hono";
 import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { Resend } from "npm:resend";
 import * as kv from "./kv_store.tsx";
 
 const app = new Hono();
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
 // Enable logger
 app.use('*', logger(console.log));
@@ -22,6 +24,7 @@ app.use(
 );
 
 const prefix = "/make-server-45707f2b";
+const MASTER_ADMIN = "Onitiloabdurrahman@gmail.com";
 
 // --- MIDDLEWARE & UTILS ---
 const getSupabase = () => {
@@ -42,7 +45,7 @@ app.post(`${prefix}/submit-application`, async (c) => {
     // Auto-tagging logic
     const tags = [];
     if (data.email.endsWith('.edu') || data.email.endsWith('.edu.ng')) tags.push('UNIVERSITY MAIL');
-    if (data.rationale.length > 100) tags.push('DETAILED PROTOCOL');
+    if (data.rationale && data.rationale.length > 100) tags.push('DETAILED PROTOCOL');
     if (data.track === 'core') tags.push('STEADY PROTOCOL');
     
     const applicant = {
@@ -67,28 +70,58 @@ app.post(`${prefix}/submit-application`, async (c) => {
   }
 });
 
-// 2. Admin Whitelist Check & OTP Trigger (Simulated for this environment)
+// 2. Admin Whitelist Check & OTP Trigger (Integrated with Resend)
 app.post(`${prefix}/admin/request-otp`, async (c) => {
   try {
     const { email } = await c.req.json();
     
-    // Check whitelist in KV
-    const whitelist = (await kv.get('admin_whitelist')) || ['admin@veridex.com']; // Default for testing
+    // Check whitelist in KV, default to MASTER_ADMIN
+    const whitelist = (await kv.get('admin_whitelist')) || [MASTER_ADMIN];
     
     if (!whitelist.includes(email)) {
       // Security: Always return success to prevent email enumeration
+      console.log(`[AUTH] Unauthorized attempt: ${email}`);
       return c.json({ success: true, message: 'If authorized, a code has been sent.' });
     }
 
-    // In a real app, we'd use supabase.auth.signInWithOtp
-    // Here we'll mock it for the brainstorming/prototype flow
-    const mockOtp = "123456"; 
-    await kv.set(`otp:${email}`, { code: mockOtp, expires: Date.now() + 600000 });
+    // Generate real 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    await kv.set(`otp:${email}`, { code: otp, expires });
     
-    console.log(`[AUTH] OTP for ${email}: ${mockOtp}`);
-    
+    // Send email via Resend
+    const { data, error } = await resend.emails.send({
+      from: 'Veridex <onboarding@resend.dev>',
+      to: [email],
+      subject: 'Veridex Access Protocol',
+      html: `
+        <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace; padding: 40px; border-radius: 8px; max-width: 400px; margin: 0 auto;">
+          <div style="border-bottom: 1px solid #27272A; padding-bottom: 20px; margin-bottom: 30px;">
+            <h1 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.2em; color: #71717A; margin: 0;">Identity Verification</h1>
+          </div>
+          <p style="font-size: 14px; line-height: 1.6; color: #A1A1AA; margin-bottom: 30px;">
+            Enter the following technical protocol to authorize your session in the Ghost Hub.
+          </p>
+          <div style="background-color: #18181B; border: 1px solid #27272A; padding: 24px; text-align: center; border-radius: 4px;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 0.3em; color: #FFFFFF;">${otp}</span>
+          </div>
+          <div style="margin-top: 40px; border-top: 1px solid #27272A; pt-20; font-size: 10px; color: #52525B; text-align: center;">
+            <p>This code expires in 10 minutes. Veridex Protocol v1.0.4</p>
+          </div>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error('Email error:', error);
+      return c.json({ success: false, error: 'Failed to deliver protocol' }, 500);
+    }
+
+    console.log(`[AUTH] Protocol sent to ${email}`);
     return c.json({ success: true });
   } catch (err) {
+    console.error('OTP Request error:', err);
     return c.json({ success: false, error: err.message }, 500);
   }
 });
@@ -101,7 +134,7 @@ app.post(`${prefix}/admin/verify-otp`, async (c) => {
     
     if (stored && stored.code === code && stored.expires > Date.now()) {
       await kv.del(`otp:${email}`);
-      // Return a "session token" (mocked)
+      // Return a "session token"
       return c.json({ success: true, token: `vdx_auth_${Math.random().toString(36).substring(2)}` });
     }
     
@@ -118,7 +151,6 @@ app.get(`${prefix}/admin/applicants`, async (c) => {
     const applicants = await Promise.all(
       list.map(id => kv.get(`applicant:${id}`))
     );
-    // Filter out any potential nulls if an applicant was deleted but not removed from list
     return c.json(applicants.filter(a => a !== null));
   } catch (err) {
     return c.json({ success: false, error: err.message }, 500);
@@ -143,10 +175,10 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
   }
 });
 
-// 6. Manage Whitelist (For the Master Admin)
+// 6. Manage Whitelist
 app.post(`${prefix}/admin/whitelist`, async (c) => {
   const { email, action } = await c.req.json();
-  const current = (await kv.get('admin_whitelist')) || ['admin@veridex.com'];
+  const current = (await kv.get('admin_whitelist')) || [MASTER_ADMIN];
   
   let updated;
   if (action === 'add') {
