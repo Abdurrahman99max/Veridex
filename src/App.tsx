@@ -68,8 +68,7 @@ export default function App() {
       setStep(4);
     } catch (err) {
       console.error('Submission error:', err);
-      // Fallback to success screen for demo/prototype if server is down
-      setStep(4); 
+      toast.error('Protocol transmission failed. Please check your connection.');
     }
   };
 
