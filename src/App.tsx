@@ -12,6 +12,7 @@ import { projectId, publicAnonKey } from './utils/supabase/info';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const [searchParams, setSearchParams] = useState(window.location.search);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [step, setStep] = useState(0); // 0: Landing, 1-3: Application, 4: Success
   const [track, setTrack] = useState<'core' | 'prep' | null>(null);
@@ -84,7 +85,10 @@ export default function App() {
 
   // Simulated internal routing for /dex
   useEffect(() => {
-    const handlePopState = () => setCurrentPath(window.location.pathname);
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+      setSearchParams(window.location.search);
+    };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
@@ -96,7 +100,9 @@ export default function App() {
     setIsAdminAuthenticated(true);
   };
 
-  if (currentPath.replace(/\/$/, '') === '/dex') {
+  const isDexHub = currentPath.replace(/\/$/, '') === '/dex' || new URLSearchParams(searchParams).has('dex');
+
+  if (isDexHub) {
     return (
       <main className="min-h-screen bg-[#0A0A0B]">
         <Toaster position="top-center" theme="dark" />
