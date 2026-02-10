@@ -96,7 +96,7 @@ export default function App() {
     setIsAdminAuthenticated(true);
   };
 
-  if (currentPath === '/dex') {
+  if (currentPath.replace(/\/$/, '') === '/dex') {
     return (
       <main className="min-h-screen bg-[#0A0A0B]">
         <Toaster position="top-center" theme="dark" />
