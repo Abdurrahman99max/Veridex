@@ -104,7 +104,7 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
 
   if (isPrep) {
     return (
-      <ApplicationLayout currentStep={3} totalSteps={3} title="Commitment Signal" onBack={onBack}>
+      <ApplicationLayout currentStep={4} totalSteps={4} title="Commitment Signal" onBack={onBack}>
         <div className="w-full space-y-8 sm:space-y-12 pb-20">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -196,7 +196,7 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
 
   // CORE TRACK VIEW
   return (
-    <ApplicationLayout currentStep={3} totalSteps={3} title="Operational Capacity" onBack={onBack}>
+    <ApplicationLayout currentStep={4} totalSteps={4} title="Operational Capacity" onBack={onBack}>
       <div className="w-full space-y-8 sm:space-y-12 pb-20">
         <div className="text-center space-y-3 px-2">
           <h2 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900">Delivery Commitment</h2>

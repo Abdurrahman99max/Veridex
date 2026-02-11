@@ -1,201 +1,166 @@
 import React, { useState, useEffect } from 'react';
+import { Toaster, toast } from 'sonner@2.0.3';
 import { LandingPage } from './components/landing/LandingPage';
+import { EntryGate } from './components/application/EntryGate';
 import { Step1Eligibility } from './components/application/Step1Eligibility';
 import { Step2SkillProof } from './components/application/Step2SkillProof';
+import { Step3Verification } from './components/application/Step3Verification';
 import { Step3Commitment } from './components/application/Step3Commitment';
 import { SuccessScreen } from './components/application/SuccessScreen';
 import { AdminLogin } from './components/AdminLogin';
 import { AdminHub } from './components/AdminHub';
-import { motion, AnimatePresence } from 'motion/react';
-import { Toaster } from 'sonner@2.0.3';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 
+type View = 'landing' | 'gate' | 'application' | 'admin' | 'success';
+
 export default function App() {
-  const [currentPath, setCurrentPath] = useState(window.location.pathname);
-  const [searchParams, setSearchParams] = useState(window.location.search);
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  const [step, setStep] = useState(0); // 0: Landing, 1-3: Application, 4: Success
+  const [view, setView] = useState<View>('landing');
+  const [step, setStep] = useState(1);
   const [track, setTrack] = useState<'core' | 'prep' | null>(null);
-  const [applicationData, setApplicationData] = useState({
-    fullName: '',
-    university: '',
-    email: '',
-    file: null,
-    gradYear: '',
-    skillCategory: '',
-    customSkill: '',
-    proofUrl: '',
-    projectContext: '',
-    rationale: '',
-    commitment: '',
-    confirmedStatus: ''
-  });
+  const [formData, setFormData] = useState<any>({});
+  const [adminAuth, setAdminAuth] = useState<{ token: string; email: string } | null>(null);
 
-  const nextStep = (newData: any) => {
-    const updatedData = { ...applicationData, ...newData };
-    setApplicationData(updatedData);
-    
-    if (newData.track) {
-      setTrack(newData.track);
-    }
-
-    setStep(prev => prev + 1);
-  };
-
-  const prevStep = () => {
-    setStep(prev => prev - 1);
-  };
-
-  const handleComplete = async (finalData: any) => {
-    const completeData = { ...applicationData, ...finalData };
-    setApplicationData(completeData);
-    
-    try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/submit-application`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${publicAnonKey}`
-        },
-        body: JSON.stringify({
-          ...completeData,
-          track: track || 'core'
-        })
-      });
-      
-      const result = await response.json();
-      
-      if (!response.ok) {
-        if (result.error === 'IDENTITY_ALREADY_REGISTERED') {
-          toast.error('This email is already registered in our secure node.', {
-            description: 'Please contact support if you need to reset your protocol.'
-          });
-          return;
-        }
-        throw new Error('Transmission failed');
-      }
-      
-      setStep(4);
-    } catch (err) {
-      console.error('Submission error:', err);
-      toast.error('Protocol transmission failed. Please check your connection.');
-    }
-  };
-
-  const handleApplyCore = () => {
-    setTrack(null);
-    setStep(1);
-  };
-
-  const handleJoinPrep = () => {
-    setTrack(null);
-    setStep(1);
-  };
-
-  // Simulated internal routing for /dex
   useEffect(() => {
-    const handlePopState = () => {
-      setCurrentPath(window.location.pathname);
-      setSearchParams(window.location.search);
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('dex')) {
+      setView('admin');
+    }
   }, []);
 
-  const [authSession, setAuthSession] = useState<{ token: string; email: string } | null>(null);
+  const handleApply = () => {
+    setTrack(null);
+    setView('gate');
+  };
+  const handleStartApplication = () => {
+    setTrack(null);
+    setView('application');
+    setStep(1);
+  };
+  const handleWaitlist = () => {
+    setTrack(null);
+    setView('application');
+    setStep(1);
+  };
+  const handleBackToLanding = () => setView('landing');
 
-  const handleAdminSuccess = (token: string, email: string) => {
-    setAuthSession({ token, email });
-    setIsAdminAuthenticated(true);
+  const handleNextStep = async (stepData: any) => {
+    const updatedData = { ...formData, ...stepData };
+    setFormData(updatedData);
+
+    if (updatedData.track) setTrack(updatedData.track);
+
+    if (step < 4) {
+      setStep(step + 1);
+    } else {
+      // Final Submission logic
+      try {
+        const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/submit-application`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`
+          },
+          body: JSON.stringify(updatedData)
+        });
+        
+        const result = await response.json();
+        if (response.ok) {
+          setView('success');
+        } else {
+          if (result.error === 'IDENTITY_ALREADY_REGISTERED') {
+            toast.error('Identity already registered in secure node.');
+          } else {
+            toast.error('Transmission failed. Check connection.');
+          }
+        }
+      } catch (err) {
+        toast.error('Protocol synchronization error.');
+      }
+    }
   };
 
-  const isDexHub = currentPath.replace(/\/$/, '') === '/dex' || new URLSearchParams(searchParams).has('dex');
+  const handleBackStep = () => {
+    if (step > 1) {
+      setStep(step - 1);
+    } else {
+      setView('gate');
+    }
+  };
 
-  if (isDexHub) {
-    return (
-      <main className="min-h-screen bg-[#0A0A0B]">
-        <Toaster position="top-center" theme="dark" />
-        {isAdminAuthenticated && authSession ? (
-          <AdminHub token={authSession.token} adminEmail={authSession.email} />
-        ) : (
-          <AdminLogin onSuccess={handleAdminSuccess} />
-        )}
-      </main>
-    );
-  }
+  const renderView = () => {
+    switch (view) {
+      case 'landing':
+        return <LandingPage onApply={handleApply} onWaitlist={handleWaitlist} />;
+      
+      case 'gate':
+        return (
+          <EntryGate 
+            onStart={handleStartApplication} 
+            onWaitlist={handleWaitlist} 
+            onBack={handleBackToLanding} 
+          />
+        );
+
+      case 'application':
+        if (step === 1) {
+          return (
+            <Step1Eligibility 
+              onNext={handleNextStep} 
+              onBack={handleBackStep} 
+              initialPath={track} 
+            />
+          );
+        }
+        if (step === 2) {
+          return (
+            <Step2SkillProof 
+              onNext={handleNextStep} 
+              onBack={handleBackStep} 
+              skillCategory={formData.skillCategory} 
+              track={track || 'core'} 
+            />
+          );
+        }
+        if (step === 3) {
+          return (
+            <Step3Verification
+              onNext={handleNextStep}
+              onBack={handleBackStep}
+              prevData={formData}
+              track={track || 'core'}
+            />
+          );
+        }
+        if (step === 4) {
+          return (
+            <Step3Commitment 
+              onComplete={handleNextStep} 
+              onBack={handleBackStep} 
+              prevData={formData}
+              track={track || 'core'} 
+            />
+          );
+        }
+        return null;
+
+      case 'success':
+        return <SuccessScreen track={track || 'core'} onReturn={() => window.location.href = '/'} />;
+
+      case 'admin':
+        if (!adminAuth) {
+          return <AdminLogin onSuccess={(token, email) => setAdminAuth({ token, email })} />;
+        }
+        return <AdminHub token={adminAuth.token} adminEmail={adminAuth.email} />;
+
+      default:
+        return <LandingPage onApply={handleApply} onWaitlist={handleWaitlist} />;
+    }
+  };
 
   return (
-    <main className="min-h-screen bg-white text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
-      <Toaster position="top-center" />
-      <AnimatePresence mode="wait">
-        {step === 0 && (
-          <motion.div
-            key="landing"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.4 }}
-          >
-            <LandingPage 
-              onApply={handleApplyCore} 
-              onWaitlist={handleJoinPrep} 
-            />
-          </motion.div>
-        )}
-
-        {step === 1 && (
-          <motion.div
-            key="step1"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Step1Eligibility onNext={nextStep} onBack={() => setStep(0)} initialPath={track} />
-          </motion.div>
-        )}
-
-        {step === 2 && (
-          <motion.div
-            key="step2"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Step2SkillProof 
-              onNext={nextStep} 
-              onBack={prevStep} 
-              skillCategory={applicationData.skillCategory} 
-              track={track || 'core'}
-            />
-          </motion.div>
-        )}
-
-        {step === 3 && (
-          <motion.div
-            key="step3"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Step3Commitment 
-              onComplete={handleComplete} 
-              onBack={prevStep}
-              prevData={applicationData}
-              track={track || 'core'}
-            />
-          </motion.div>
-        )}
-
-        {step === 4 && (
-          <SuccessScreen 
-            track={track || 'core'} 
-            onReturn={() => setStep(0)} 
-          />
-        )}
-      </AnimatePresence>
-    </main>
+    <div className="min-h-screen bg-white">
+      <Toaster position="top-center" richColors />
+      {renderView()}
+    </div>
   );
 }

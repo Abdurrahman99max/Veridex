@@ -84,7 +84,6 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
   };
 
   const isEmailProvided = formData.email.trim().includes('@') && formData.email.trim().length > 5;
-  const isFileProvided = formData.file !== null;
   
   const isSkillValid = formData.skillCategory === 'other' 
     ? formData.customSkill.trim().length >= 2 
@@ -92,14 +91,13 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
 
   const isContactValid = (val: string) => {
     const isEmail = val.includes('@') && val.includes('.') && val.length > 5;
-    const isPhone = val.startsWith('+') && val.replace(/\D/g, '').length >= 10 && val.replace(/\D/g, '').length <= 15;
-    return isEmail || isPhone;
+    return isEmail;
   };
 
   const isCoreValid = formData.fullName.trim() !== '' && 
                      formData.university.trim() !== '' && 
                      isSkillValid &&
-                     (isEmailProvided || isFileProvided);
+                     isEmailProvided;
 
   const isPrepValid = formData.fullName.trim() !== '' && 
                      formData.university.trim() !== '' && 
@@ -153,7 +151,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
   return (
     <ApplicationLayout 
       currentStep={1} 
-      totalSteps={3} 
+      totalSteps={4} 
       title={selectedPath === 'prep' ? "Context & Intent" : "Eligibility Protocol"} 
       onBack={handleInternalBack}
     >
@@ -340,8 +338,8 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
 
                           <div className="space-y-6 pt-6 border-t border-slate-100">
                             <div className="space-y-1">
-                              <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">VERIFICATION METHOD</Label>
-                              <p className="text-[11px] sm:text-xs text-slate-400 font-inter">Identify using one of the two protocols below.</p>
+                              <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">PERSONAL IDENTIFICATION</Label>
+                              <p className="text-[11px] sm:text-xs text-slate-400 font-inter">Provide your primary personal email for identity sync.</p>
                             </div>
                             
                             <div className="grid grid-cols-1 gap-4">
@@ -351,41 +349,12 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                                   <Input 
                                     type="email"
                                     value={formData.email}
-                                    onChange={(e) => setFormData({...formData, email: e.target.value, file: null})}
-                                    placeholder="School email (Recommended)"
+                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                    placeholder="Personal email (e.g. name@gmail.com)"
                                     className={`pl-12 h-14 border-slate-200 transition-all font-inter bg-white focus:border-slate-900 ${isEmailProvided ? 'border-indigo-200' : ''}`}
                                   />
                                 </div>
                               </div>
-
-                              <div className="flex items-center gap-4 py-1">
-                                <div className="flex-1 h-px bg-slate-100" />
-                                <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest px-2">OR</span>
-                                <div className="flex-1 h-px bg-slate-100" />
-                              </div>
-
-                              <label className={`relative cursor-pointer group flex flex-col items-center justify-center p-6 sm:p-8 border-2 border-dashed rounded-xl transition-all ${isFileProvided ? 'border-indigo-500 bg-indigo-50/30' : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50/50'}`}>
-                                <input 
-                                  type="file" 
-                                  className="hidden" 
-                                  onChange={(e) => setFormData({...formData, file: e.target.files?.[0] || null, email: ''})}
-                                />
-                                {isFileProvided ? (
-                                  <div className="flex items-center gap-3">
-                                    <FileText className="w-6 h-6 text-indigo-600" />
-                                    <div className="text-left">
-                                      <p className="text-sm font-urbanist font-bold text-slate-900 max-w-[150px] sm:max-w-none truncate">{formData.file?.name}</p>
-                                      <p className="text-[10px] text-slate-500 uppercase font-mono tracking-tight">DOCUMENT_PROOF_ATTACHED</p>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="text-center space-y-2">
-                                    <Upload className="w-5 h-5 text-slate-400 mx-auto" />
-                                    <p className="text-sm font-urbanist font-bold text-slate-900">Upload Status Proof</p>
-                                    <p className="text-[11px] text-slate-400 font-inter">Portal Screenshot or Enrollment Letter</p>
-                                  </div>
-                                )}
-                              </label>
                             </div>
                           </div>
 

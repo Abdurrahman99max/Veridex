@@ -24,17 +24,79 @@ app.use(
 );
 
 const prefix = "/make-server-45707f2b";
+const BUCKET_NAME = "make-45707f2b-veridex-docs";
 const MASTER_ADMIN = "onitiloabdurrahman@gmail.com";
 
 // --- MIDDLEWARE & UTILS ---
-const getSupabase = () => {
-  return createClient(
+const getSupabase = async () => {
+  const client = createClient(
     Deno.env.get('SUPABASE_URL') || '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
   );
+
+  try {
+    const { data: buckets } = await client.storage.listBuckets();
+    const bucketExists = buckets?.some(bucket => bucket.name === BUCKET_NAME);
+    if (!bucketExists) {
+      console.log(`[STORAGE] Creating bucket: ${BUCKET_NAME}`);
+      await client.storage.createBucket(BUCKET_NAME, {
+        public: false,
+        fileSizeLimit: 5242880,
+      });
+    }
+  } catch (err) {
+    console.error('[STORAGE] Init error:', err);
+  }
+
+  return client;
 };
 
 // --- ROUTES ---
+
+// 0. Vault Ingestion (Proxy Upload)
+app.post(`${prefix}/vault/upload`, async (c) => {
+  try {
+    const body = await c.req.parseBody();
+    const file = body['file'] as File;
+    const path = body['path'] as string;
+
+    if (!file || !path) return c.json({ error: 'Missing file or path' }, 400);
+
+    const supabase = await getSupabase();
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(path, file, {
+        contentType: file.type,
+        upsert: true
+      });
+
+    if (error) throw error;
+    return c.json({ success: true, path: data.path });
+  } catch (err) {
+    console.error('[VAULT] Upload error:', err);
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// Admin: Get Signed URL for Trust Anchor
+app.post(`${prefix}/admin/signed-url`, async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization');
+    if (!authHeader) return c.json({ error: 'Unauthorized' }, 401);
+
+    const { path } = await c.req.json();
+    const supabase = await getSupabase();
+    
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .createSignedUrl(path, 900); // 15 minutes
+
+    if (error) throw error;
+    return c.json({ url: data.signedUrl });
+  } catch (err) {
+    return c.json({ error: err.message }, 500);
+  }
+});
 
 // 1. Submit Application
 app.post(`${prefix}/submit-application`, async (c) => {
@@ -59,7 +121,7 @@ app.post(`${prefix}/submit-application`, async (c) => {
     if (email.endsWith('.edu') || email.endsWith('.edu.ng')) tags.push('UNIVERSITY MAIL');
     if (data.rationale && data.rationale.length > 100) tags.push('DETAILED PROTOCOL');
     if (data.track === 'core') tags.push('STEADY PROTOCOL');
-    if (data.file) tags.push('DOCUMENT PROOF');
+    if (data.documentPath) tags.push('TRUST_ANCHOR');
     
     const applicant = {
       ...data,
