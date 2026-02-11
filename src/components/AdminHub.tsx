@@ -86,6 +86,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newTeamMember, setNewTeamMember] = useState('');
+  const [isMaximized, setIsMaximized] = useState(false);
 
   const fetchAllData = async () => {
     try {
@@ -123,9 +124,19 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
         body: JSON.stringify({ status })
       });
       
+      const result = await response.json();
       if (response.ok) {
         setApplicants(prev => prev.map(a => a.id === id ? { ...a, status } : a));
-        toast.success(`Protocol update transmitted: ${status.toUpperCase()}`);
+        
+        if (result.emailSent) {
+          toast.success(`Protocol accepted and email dispatched.`);
+        } else if (result.emailError) {
+          toast.warning(`Status updated, but email protocol failed (Sandbox limit?).`);
+          console.error('Email error:', result.emailError);
+        } else {
+          toast.success(`Protocol update transmitted: ${status.toUpperCase()}`);
+        }
+
         if (status === 'archived') setSelectedId(null);
       } else {
         throw new Error('Update failed');
@@ -135,6 +146,22 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
     } finally {
       setIsUpdatingStatus(null);
     }
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['ID', 'Name', 'Email', 'University', 'Track', 'Status', 'Date'];
+    const rows = applicants.map(a => [
+      a.id, a.fullName, a.email, a.university, a.track, a.status, new Date(a.submittedAt).toLocaleDateString()
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `veridex_dossier_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Dossier exported successfully');
   };
 
   const handleReroute = async (id: string) => {
@@ -297,6 +324,9 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
+            <button onClick={handleExportCSV} className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md border ${borderColor} ${surfaceColor} hover:bg-white/5 transition-colors text-[11px] font-bold uppercase`}>
+              <Download className="w-3.5 h-3.5" /> Export
+            </button>
             <button onClick={toggleTheme} className={`p-2 rounded-full border ${borderColor} ${surfaceColor}`}>
               {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
             </button>
@@ -417,24 +447,58 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
       {/* Dossier Detail View (Mobile & Desktop Overlay) */}
       <AnimatePresence>
         {selectedId && selectedApplicant && (
-          <div className="fixed inset-0 z-[150] md:relative md:inset-auto md:z-50">
+          <div className="fixed inset-0 z-[150] flex justify-end">
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setSelectedId(null)}
-              className="absolute inset-0 bg-black/80 md:hidden backdrop-blur-md" 
+              className="absolute inset-0 bg-black/80 backdrop-blur-md" 
             />
-            <motion.div 
-              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className={`absolute right-0 top-0 bottom-0 w-full sm:w-[500px] md:w-[450px] lg:w-[500px] ${surfaceColor} border-l ${borderColor} flex flex-col shadow-2xl`}
+            <Resizable
+              size={{ width: isMaximized ? '95%' : (window.innerWidth < 640 ? '100%' : 500), height: '100%' }}
+              onResizeStop={(e, direction, ref, d) => {
+                // Keep standard behavior but allow visual handle
+              }}
+              minWidth={350}
+              maxWidth="100%"
+              enable={{ left: true }}
+              handleStyles={{
+                left: {
+                  width: '10px',
+                  left: '-5px',
+                  cursor: 'ew-resize',
+                  zIndex: 200
+                }
+              }}
+              handleComponent={{
+                left: (
+                  <div className="h-full w-1 flex items-center justify-center group">
+                    <div className={`h-24 w-1 rounded-full ${theme === 'dark' ? 'bg-white/10 group-hover:bg-indigo-500' : 'bg-slate-200 group-hover:bg-indigo-500'} transition-colors`} />
+                  </div>
+                )
+              }}
+              className="z-[151] relative h-full"
             >
-              <div className={`p-4 border-b ${borderColor} flex items-center justify-between sticky top-0 ${surfaceColor} z-10`}>
-                <div className="flex flex-col">
-                  <div className={`${headingColor} font-bold text-[10px] tracking-widest uppercase mb-1`}>Dossier Analysis</div>
-                  <div className="text-xs opacity-50 font-bold">{selectedApplicant.id}</div>
+              <motion.div 
+                initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                className={`h-full ${surfaceColor} border-l ${borderColor} flex flex-col shadow-2xl relative`}
+              >
+                <div className={`p-4 border-b ${borderColor} flex items-center justify-between sticky top-0 ${surfaceColor} z-10`}>
+                  <div className="flex flex-col">
+                    <div className={`${headingColor} font-bold text-[10px] tracking-widest uppercase mb-1`}>Dossier Analysis</div>
+                    <div className="text-xs opacity-50 font-bold">{selectedApplicant.id}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => setIsMaximized(!isMaximized)} 
+                      className="p-2 hover:bg-white/10 rounded-lg transition-all hidden sm:block"
+                      title={isMaximized ? "Restore" : "Maximize"}
+                    >
+                      {isMaximized ? <LayoutGrid className="w-4 h-4 rotate-45" /> : <ArrowUpRight className="w-4 h-4" />}
+                    </button>
+                    <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-white/10 rounded-full transition-all"><X className="w-5 h-5" /></button>
+                  </div>
                 </div>
-                <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-white/10 rounded-full transition-all"><X className="w-5 h-5" /></button>
-              </div>
 
               <div className="flex-1 overflow-auto p-6 md:p-8 space-y-8 pb-32">
                 {/* Header Info */}
@@ -578,9 +642,10 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                 </div>
               </div>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+          </Resizable>
+        </div>
+      )}
+    </AnimatePresence>
+  </div>
+);
 }

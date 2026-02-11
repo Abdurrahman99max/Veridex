@@ -243,24 +243,42 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
     await kv.set(`applicant:${id}`, updated);
 
     // Automation: Send Status Update Email
+    let emailSent = false;
+    let emailError = null;
+
     if (status === 'verified' || status === 'flagged') {
       try {
-        await resend.emails.send({
+        console.log(`[EMAIL] Attempting to send protocol update to ${applicant.email}...`);
+        const { data: emailData, error: emailErr } = await resend.emails.send({
           from: 'Veridex Admissions <onboarding@resend.dev>',
           to: [applicant.email],
           subject: `Protocol Update: ${status === 'verified' ? 'ACCEPTED' : 'FLAGGED'}`,
           html: `
-            <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: monospace; padding: 40px;">
-              <h2 style="color: ${status === 'verified' ? '#10B981' : '#EF4444'}">${status === 'verified' ? 'PROTOCOL VERIFIED' : 'PROTOCOL FLAGGED'}</h2>
-              <p>Hello ${applicant.fullName},</p>
-              <p>Your application for the ${applicant.track} track has been processed.</p>
-              <p>${status === 'verified' ? 'You have been granted access to the platform. Further instructions will follow.' : 'Your application requires additional evidence or has been rejected at this time.'}</p>
-              <p>Reference ID: ${id}</p>
+            <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: monospace; padding: 40px; border: 1px solid #27272A; border-radius: 8px;">
+              <h2 style="color: ${status === 'verified' ? '#10B981' : '#EF4444'}; text-transform: uppercase; letter-spacing: 0.1em;">${status === 'verified' ? 'PROTOCOL VERIFIED' : 'PROTOCOL FLAGGED'}</h2>
+              <p style="color: #A1A1AA; line-height: 1.6;">Hello ${applicant.fullName},</p>
+              <p style="color: #A1A1AA; line-height: 1.6;">Your application for the <strong>${applicant.track.toUpperCase()}</strong> track has been processed by our secure node.</p>
+              <p style="color: #FFFFFF; font-weight: bold; background: #18181B; padding: 10px; border-radius: 4px;">
+                ${status === 'verified' ? 'ACCESS GRANTED: You have been accepted into the platform. Welcome to the Veridex core.' : 'ACTION REQUIRED: Your application requires additional evidence or has been rejected at this time.'}
+              </p>
+              <div style="margin-top: 30px; border-top: 1px solid #27272A; padding-top: 20px; font-size: 11px; color: #52525B;">
+                <p>Reference ID: ${id}</p>
+                <p>Date: ${new Date().toUTCString()}</p>
+              </div>
             </div>
           `
         });
-      } catch (emailErr) {
-        console.error('[EMAIL] Automation failed:', emailErr);
+
+        if (emailErr) {
+          console.error('[EMAIL] Resend Error:', emailErr);
+          emailError = emailErr;
+        } else {
+          console.log('[EMAIL] Success:', emailData);
+          emailSent = true;
+        }
+      } catch (err) {
+        console.error('[EMAIL] Unexpected Exception:', err);
+        emailError = err.message;
       }
     }
 
@@ -268,11 +286,11 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
     await kv.set('audit_logs', [{
       id: `LOG-${Date.now()}`,
       action: 'STATUS_UPDATE',
-      details: `Protocol ${id} (${applicant.email}) updated to ${status}`,
+      details: `Protocol ${id} (${applicant.email}) updated to ${status}. Email success: ${emailSent}`,
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
     
-    return c.json({ success: true });
+    return c.json({ success: true, emailSent, emailError });
   } catch (err) {
     return c.json({ success: false, error: err.message }, 500);
   }
