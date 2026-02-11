@@ -63,7 +63,17 @@ export default function App() {
         })
       });
       
-      if (!response.ok) throw new Error('Transmission failed');
+      const result = await response.json();
+      
+      if (!response.ok) {
+        if (result.error === 'IDENTITY_ALREADY_REGISTERED') {
+          toast.error('This email is already registered in our secure node.', {
+            description: 'Please contact support if you need to reset your protocol.'
+          });
+          return;
+        }
+        throw new Error('Transmission failed');
+      }
       
       setStep(4);
     } catch (err) {

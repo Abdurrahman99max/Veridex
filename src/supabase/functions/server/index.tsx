@@ -40,7 +40,18 @@ const getSupabase = () => {
 app.post(`${prefix}/submit-application`, async (c) => {
   try {
     const data = await c.req.json();
-    const email = data.email.toLowerCase();
+    const email = data.email.toLowerCase().trim();
+    
+    // 🛡️ IDENTITY LOCK: Check for existing email to prevent duplicates
+    const emailMap = await kv.get('email_to_id_map') || {};
+    if (emailMap[email]) {
+      return c.json({ 
+        success: false, 
+        error: 'IDENTITY_ALREADY_REGISTERED',
+        message: 'This protocol already exists in our secure database.' 
+      }, 409);
+    }
+
     const id = `VX-${data.track === 'core' ? 'C' : 'P'}-${Math.random().toString(36).substring(7).toUpperCase()}`;
     
     // Auto-tagging logic
@@ -48,6 +59,7 @@ app.post(`${prefix}/submit-application`, async (c) => {
     if (email.endsWith('.edu') || email.endsWith('.edu.ng')) tags.push('UNIVERSITY MAIL');
     if (data.rationale && data.rationale.length > 100) tags.push('DETAILED PROTOCOL');
     if (data.track === 'core') tags.push('STEADY PROTOCOL');
+    if (data.file) tags.push('DOCUMENT PROOF');
     
     const applicant = {
       ...data,
@@ -61,9 +73,22 @@ app.post(`${prefix}/submit-application`, async (c) => {
     // Save to KV store
     await kv.set(`applicant:${id}`, applicant);
     
-    // Also save to a list of all applicants for easy retrieval
+    // Update the Identity Lock map
+    emailMap[email] = id;
+    await kv.set('email_to_id_map', emailMap);
+    
+    // Update the master list
     const existingList = (await kv.get('applicant_list')) || [];
     await kv.set('applicant_list', [id, ...existingList]);
+
+    // LOG ACTION
+    const logs = await kv.get('audit_logs') || [];
+    await kv.set('audit_logs', [{
+      id: `LOG-${Date.now()}`,
+      action: 'NEW_APPLICATION',
+      details: `Signal received from ${email}`,
+      timestamp: new Date().toISOString()
+    }, ...logs].slice(0, 100));
 
     return c.json({ success: true, id });
   } catch (err) {
@@ -173,10 +198,66 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
     
     const updated = { ...applicant, status };
     await kv.set(`applicant:${id}`, updated);
+
+    // LOG ACTION
+    const logs = await kv.get('audit_logs') || [];
+    await kv.set('audit_logs', [{
+      id: `LOG-${Date.now()}`,
+      action: 'STATUS_UPDATE',
+      details: `Protocol ${id} marked as ${status}`,
+      timestamp: new Date().toISOString()
+    }, ...logs].slice(0, 100));
     
     return c.json({ success: true });
   } catch (err) {
     return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+// 6. Delete Protocol (for Support)
+app.delete(`${prefix}/admin/applicants/:id`, async (c) => {
+  try {
+    const id = c.req.param('id');
+    const applicant = await kv.get(`applicant:${id}`);
+    if (!applicant) return c.json({ success: false, error: 'Not found' }, 404);
+
+    const email = applicant.email;
+
+    // Remove from main list
+    const list = (await kv.get('applicant_list')) || [];
+    const newList = list.filter(item => item !== id);
+    await kv.set('applicant_list', newList);
+
+    // Remove from Email Map (🛡️ Unlock Identity)
+    const emailMap = await kv.get('email_to_id_map') || {};
+    delete emailMap[email];
+    await kv.set('email_to_id_map', emailMap);
+
+    // Delete record
+    await kv.del(`applicant:${id}`);
+
+    // LOG ACTION
+    const logs = await kv.get('audit_logs') || [];
+    await kv.set('audit_logs', [{
+      id: `LOG-${Date.now()}`,
+      action: 'PROTOCOL_DELETED',
+      details: `Identity ${email} removed from secure node.`,
+      timestamp: new Date().toISOString()
+    }, ...logs].slice(0, 100));
+
+    return c.json({ success: true });
+  } catch (err) {
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+// 7. Get Audit Logs
+app.get(`${prefix}/admin/audit-logs`, async (c) => {
+  try {
+    const logs = await kv.get('audit_logs') || [];
+    return c.json(logs);
+  } catch (err) {
+    return c.json([], 500);
   }
 });
 
