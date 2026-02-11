@@ -17,7 +17,7 @@ app.use(
   cors({
     origin: "*",
     allowHeaders: ["Content-Type", "Authorization"],
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
   }),
@@ -148,7 +148,7 @@ app.post(`${prefix}/submit-application`, async (c) => {
     await kv.set('audit_logs', [{
       id: `LOG-${Date.now()}`,
       action: 'NEW_APPLICATION',
-      details: `Signal received from ${email}`,
+      details: `Signal received from ${email} (${data.track})`,
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
 
@@ -159,59 +159,43 @@ app.post(`${prefix}/submit-application`, async (c) => {
   }
 });
 
-// 2. Admin Whitelist Check & OTP Trigger (Integrated with Resend)
+// 2. Admin Whitelist Check & OTP Trigger
 app.post(`${prefix}/admin/request-otp`, async (c) => {
   try {
     const body = await c.req.json();
     const email = body.email.toLowerCase();
     
-    // Check whitelist in KV, default to MASTER_ADMIN
     const whitelist = (await kv.get('admin_whitelist')) || [MASTER_ADMIN];
     
     if (!whitelist.includes(email)) {
-      // Security: Always return success to prevent email enumeration
       console.log(`[AUTH] Unauthorized attempt: ${email}`);
       return c.json({ success: true, message: 'If authorized, a code has been sent.' });
     }
 
-    // Generate real 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const expires = Date.now() + 10 * 60 * 1000;
 
     await kv.set(`otp:${email}`, { code: otp, expires });
     
-    // Send email via Resend
-    const { data, error } = await resend.emails.send({
-      from: 'Veridex <onboarding@resend.dev>',
+    const { error } = await resend.emails.send({
+      from: 'Veridex Hub <onboarding@resend.dev>',
       to: [email],
       subject: 'Veridex Access Protocol',
       html: `
-        <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace; padding: 40px; border-radius: 8px; max-width: 400px; margin: 0 auto;">
-          <div style="border-bottom: 1px solid #27272A; padding-bottom: 20px; margin-bottom: 30px;">
-            <h1 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.2em; color: #71717A; margin: 0;">Identity Verification</h1>
-          </div>
-          <p style="font-size: 14px; line-height: 1.6; color: #A1A1AA; margin-bottom: 30px;">
-            Enter the following technical protocol to authorize your session in the Ghost Hub.
-          </p>
+        <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: monospace; padding: 40px; border-radius: 8px; max-width: 400px; margin: 0 auto;">
+          <h1 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.2em; color: #71717A; margin: 0;">Identity Verification</h1>
+          <p style="font-size: 14px; color: #A1A1AA; margin-bottom: 30px;">Enter the following protocol to authorize your session.</p>
           <div style="background-color: #18181B; border: 1px solid #27272A; padding: 24px; text-align: center; border-radius: 4px;">
             <span style="font-size: 32px; font-weight: bold; letter-spacing: 0.3em; color: #FFFFFF;">${otp}</span>
-          </div>
-          <div style="margin-top: 40px; border-top: 1px solid #27272A; pt-20; font-size: 10px; color: #52525B; text-align: center;">
-            <p>This code expires in 10 minutes. Veridex Protocol v1.0.4</p>
           </div>
         </div>
       `,
     });
 
-    if (error) {
-      console.error('Email error:', error);
-      return c.json({ success: false, error: 'Failed to deliver protocol. Resend verification required.' }, 500);
-    }
-
-    console.log(`[AUTH] Protocol sent to ${email}`);
+    if (error) throw error;
     return c.json({ success: true });
   } catch (err) {
-    console.error('OTP Request error:', err);
+    console.error('OTP error:', err);
     return c.json({ success: false, error: err.message }, 500);
   }
 });
@@ -226,7 +210,6 @@ app.post(`${prefix}/admin/verify-otp`, async (c) => {
     
     if (stored && stored.code === code && stored.expires > Date.now()) {
       await kv.del(`otp:${email}`);
-      // Return a "session token"
       return c.json({ success: true, token: `vdx_auth_${Math.random().toString(36).substring(2)}` });
     }
     
@@ -236,20 +219,18 @@ app.post(`${prefix}/admin/verify-otp`, async (c) => {
   }
 });
 
-// 4. Get All Applicants (Protected)
+// 4. Get All Applicants
 app.get(`${prefix}/admin/applicants`, async (c) => {
   try {
     const list = (await kv.get('applicant_list')) || [];
-    const applicants = await Promise.all(
-      list.map(id => kv.get(`applicant:${id}`))
-    );
+    const applicants = await Promise.all(list.map(id => kv.get(`applicant:${id}`)));
     return c.json(applicants.filter(a => a !== null));
   } catch (err) {
     return c.json({ success: false, error: err.message }, 500);
   }
 });
 
-// 5. Update Status
+// 5. Update Status + Automated Emails
 app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
   try {
     const id = c.req.param('id');
@@ -261,12 +242,33 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
     const updated = { ...applicant, status };
     await kv.set(`applicant:${id}`, updated);
 
-    // LOG ACTION
+    // Automation: Send Status Update Email
+    if (status === 'verified' || status === 'flagged') {
+      try {
+        await resend.emails.send({
+          from: 'Veridex Admissions <onboarding@resend.dev>',
+          to: [applicant.email],
+          subject: `Protocol Update: ${status === 'verified' ? 'ACCEPTED' : 'FLAGGED'}`,
+          html: `
+            <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: monospace; padding: 40px;">
+              <h2 style="color: ${status === 'verified' ? '#10B981' : '#EF4444'}">${status === 'verified' ? 'PROTOCOL VERIFIED' : 'PROTOCOL FLAGGED'}</h2>
+              <p>Hello ${applicant.fullName},</p>
+              <p>Your application for the ${applicant.track} track has been processed.</p>
+              <p>${status === 'verified' ? 'You have been granted access to the platform. Further instructions will follow.' : 'Your application requires additional evidence or has been rejected at this time.'}</p>
+              <p>Reference ID: ${id}</p>
+            </div>
+          `
+        });
+      } catch (emailErr) {
+        console.error('[EMAIL] Automation failed:', emailErr);
+      }
+    }
+
     const logs = await kv.get('audit_logs') || [];
     await kv.set('audit_logs', [{
       id: `LOG-${Date.now()}`,
       action: 'STATUS_UPDATE',
-      details: `Protocol ${id} marked as ${status}`,
+      details: `Protocol ${id} (${applicant.email}) updated to ${status}`,
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
     
@@ -276,34 +278,25 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
   }
 });
 
-// 6. Delete Protocol (for Support)
-app.delete(`${prefix}/admin/applicants/:id`, async (c) => {
+// 6. Reroute Core to Prep
+app.patch(`${prefix}/admin/applicants/:id/reroute`, async (c) => {
   try {
     const id = c.req.param('id');
     const applicant = await kv.get(`applicant:${id}`);
     if (!applicant) return c.json({ success: false, error: 'Not found' }, 404);
 
-    const email = applicant.email;
+    const updated = { 
+      ...applicant, 
+      track: 'prep', 
+      tags: [...(applicant.tags || []), 'REROUTED_FROM_CORE'] 
+    };
+    await kv.set(`applicant:${id}`, updated);
 
-    // Remove from main list
-    const list = (await kv.get('applicant_list')) || [];
-    const newList = list.filter(item => item !== id);
-    await kv.set('applicant_list', newList);
-
-    // Remove from Email Map (🛡️ Unlock Identity)
-    const emailMap = await kv.get('email_to_id_map') || {};
-    delete emailMap[email];
-    await kv.set('email_to_id_map', emailMap);
-
-    // Delete record
-    await kv.del(`applicant:${id}`);
-
-    // LOG ACTION
     const logs = await kv.get('audit_logs') || [];
     await kv.set('audit_logs', [{
       id: `LOG-${Date.now()}`,
-      action: 'PROTOCOL_DELETED',
-      details: `Identity ${email} removed from secure node.`,
+      action: 'PROTOCOL_REROUTE',
+      details: `Identity ${applicant.email} rerouted from Core to Prep track.`,
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
 
@@ -313,7 +306,38 @@ app.delete(`${prefix}/admin/applicants/:id`, async (c) => {
   }
 });
 
-// 7. Get Audit Logs
+// 7. Delete Protocol
+app.delete(`${prefix}/admin/applicants/:id`, async (c) => {
+  try {
+    const id = c.req.param('id');
+    const applicant = await kv.get(`applicant:${id}`);
+    if (!applicant) return c.json({ success: false, error: 'Not found' }, 404);
+
+    const email = applicant.email;
+    const list = (await kv.get('applicant_list')) || [];
+    await kv.set('applicant_list', list.filter(item => item !== id));
+
+    const emailMap = await kv.get('email_to_id_map') || {};
+    delete emailMap[email];
+    await kv.set('email_to_id_map', emailMap);
+
+    await kv.del(`applicant:${id}`);
+
+    const logs = await kv.get('audit_logs') || [];
+    await kv.set('audit_logs', [{
+      id: `LOG-${Date.now()}`,
+      action: 'PROTOCOL_DELETED',
+      details: `Identity ${email} removed.`,
+      timestamp: new Date().toISOString()
+    }, ...logs].slice(0, 100));
+
+    return c.json({ success: true });
+  } catch (err) {
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+// 8. Get Audit Logs
 app.get(`${prefix}/admin/audit-logs`, async (c) => {
   try {
     const logs = await kv.get('audit_logs') || [];
@@ -323,20 +347,34 @@ app.get(`${prefix}/admin/audit-logs`, async (c) => {
   }
 });
 
-// 6. Manage Whitelist
+// 9. Manage Whitelist
 app.post(`${prefix}/admin/whitelist`, async (c) => {
-  const { email, action } = await c.req.json();
-  const current = (await kv.get('admin_whitelist')) || [MASTER_ADMIN];
-  
-  let updated;
-  if (action === 'add') {
-    updated = [...new Set([...current, email])];
-  } else {
-    updated = current.filter(e => e !== email);
+  try {
+    const { email, action } = await c.req.json();
+    const current = (await kv.get('admin_whitelist')) || [MASTER_ADMIN];
+    
+    let updated;
+    if (action === 'add') {
+      updated = [...new Set([...current, email.toLowerCase()])];
+    } else {
+      updated = current.filter(e => e !== email.toLowerCase());
+    }
+    
+    await kv.set('admin_whitelist', updated);
+    return c.json({ success: true, whitelist: updated });
+  } catch (err) {
+    return c.json({ success: false, error: err.message }, 500);
   }
-  
-  await kv.set('admin_whitelist', updated);
-  return c.json({ success: true, whitelist: updated });
+});
+
+// 10. Get Whitelist
+app.get(`${prefix}/admin/whitelist`, async (c) => {
+  try {
+    const whitelist = (await kv.get('admin_whitelist')) || [MASTER_ADMIN];
+    return c.json(whitelist);
+  } catch (err) {
+    return c.json([], 500);
+  }
 });
 
 Deno.serve(app.fetch);
