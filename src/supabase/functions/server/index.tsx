@@ -299,8 +299,13 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
               <p style="color: #A1A1AA; line-height: 1.6;">We’ve completed a manual review of your application. At this time, we’re unable to approve your profile for task assignment.</p>
               
               <div style="background: #18181B; padding: 20px; border-radius: 4px; border-left: 4px solid #EF4444; margin: 20px 0;">
-                <p style="margin: 0; font-size: 12px; color: #52525B; text-transform: uppercase;">Skill-Specific Feedback:</p>
-                <p style="margin: 10px 0 0 0; color: #FFFFFF; font-size: 14px; line-height: 1.5;">${adminFeedback || 'Proof provided does not currently meet the task-ready professional standard required for employer matching.'}</p>
+                <p style="margin: 0; font-size: 12px; color: #52525B; text-transform: uppercase;">🔹 Skill-Specific Feedback Block:</p>
+                <p style="margin: 10px 0 10px 0; color: #FFFFFF; font-size: 14px; line-height: 1.5;">${adminFeedback || 'Proof provided does not currently meet the task-ready professional standard required for employer matching.'}</p>
+                
+                <div style="font-size: 12px; margin-top: 15px; border-top: 1px solid #27272A; padding-top: 10px;">
+                  <p style="color: #EF4444; margin: 5px 0;"><strong>❌ What we cannot accept:</strong> generic coursework, unverified certificates, incomplete projects.</p>
+                  <p style="color: #10B981; margin: 5px 0;"><strong>✅ What acceptable proof looks like:</strong> live production links, verifiable GitHub commits, signed technical endorsements.</p>
+                </div>
               </div>
 
               <p style="color: #A1A1AA; font-size: 13px;">Our platform is designed exclusively for final-year students who demonstrate applied work. You are encouraged to improve your submission and re-apply once your proof of work meets the standard described in our documentation.</p>
