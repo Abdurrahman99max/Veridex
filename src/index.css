@@ -488,6 +488,10 @@
     pointer-events: none;
   }
 
+  .visible {
+    visibility: visible;
+  }
+
   .absolute {
     position: absolute;
   }
@@ -682,6 +686,10 @@
 
   .z-\[200\] {
     z-index: 200;
+  }
+
+  .z-\[300\] {
+    z-index: 300;
   }
 
   .-mx-1 {

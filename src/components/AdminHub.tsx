@@ -185,6 +185,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
         if (status === 'archived') {
             setSelectedId(null);
         }
+        // Force immediate log refresh for accountability
         fetchAllData();
       } else {
         throw new Error('Update failed');
@@ -264,6 +265,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
         setWhitelist(data.whitelist);
         setNewTeamMember('');
         toast.success(`Team member ${action === 'add' ? 'added' : 'removed'}`);
+        fetchAllData();
       }
     } catch (err) {
       toast.error('Whitelist update failed');
@@ -807,7 +809,8 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                             <SelectTrigger className="h-10 bg-white/5 border-white/10 text-white font-mono text-xs focus:ring-indigo-500/50 focus:border-indigo-500/50 border hover:border-indigo-500/30 transition-all">
                                 <SelectValue placeholder="Select Tier" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#121214] border-white/10 text-white">
+                            {/* FORCE HIGH Z-INDEX FOR THE DROPDOWN CONTENT */}
+                            <SelectContent className="bg-[#121214] border-white/10 text-white z-[300]">
                                 <SelectItem value="high" className="focus:bg-indigo-600 focus:text-white transition-colors cursor-pointer text-xs font-mono">Verified – High</SelectItem>
                                 <SelectItem value="medium" className="focus:bg-indigo-600 focus:text-white transition-colors cursor-pointer text-xs font-mono">Verified – Medium</SelectItem>
                                 <SelectItem value="under_review" className="focus:bg-indigo-600 focus:text-white transition-colors cursor-pointer text-xs font-mono">Under Review</SelectItem>
@@ -895,10 +898,12 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
         }
         
         /* Custom UI Select styling for Dark Theme */
+        /* Ensure the portal content is visible above the dossier overlay */
         [data-slot="select-content"] {
             background-color: #121214 !important;
             border-color: rgba(255, 255, 255, 0.1) !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8) !important;
+            z-index: 300 !important;
         }
         [data-slot="select-item"]:focus {
             background-color: #4F46E5 !important;
@@ -910,6 +915,11 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
         [data-slot="select-trigger"]:focus {
             border-color: #4F46E5 !important;
             box-shadow: 0 0 0 1px #4F46E5 !important;
+        }
+        
+        /* Ensure the radix portal itself has the high z-index */
+        div[data-radix-portal] {
+            z-index: 300 !important;
         }
       `}} />
     </div>
