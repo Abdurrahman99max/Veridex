@@ -49,6 +49,8 @@ interface Applicant {
   university: string;
   track: 'core' | 'prep';
   status: 'pending' | 'verified' | 'flagged' | 'archived';
+  reliabilityTier?: 'high' | 'medium' | 'under_review';
+  adminFeedback?: string;
   rationale: string;
   skillCategory: string;
   proofUrl: string;
@@ -87,6 +89,15 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newTeamMember, setNewTeamMember] = useState('');
   const [isMaximized, setIsMaximized] = useState(false);
+  const [tempTier, setTempTier] = useState<'high' | 'medium' | 'under_review'>('medium');
+  const [tempFeedback, setTempFeedback] = useState('');
+
+  useEffect(() => {
+    if (selectedId && selectedApplicant) {
+      setTempTier(selectedApplicant.reliabilityTier || 'medium');
+      setTempFeedback(selectedApplicant.adminFeedback || '');
+    }
+  }, [selectedId, selectedApplicant]);
 
   const fetchAllData = async () => {
     try {
@@ -112,7 +123,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const handleStatusUpdate = async (id: string, status: Applicant['status']) => {
+  const handleStatusUpdate = async (id: string, status: Applicant['status'], tier?: string, feedback?: string) => {
     setIsUpdatingStatus(id);
     try {
       const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/applicants/${id}`, {
@@ -121,17 +132,21 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${publicAnonKey}`
         },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ 
+          status, 
+          reliabilityTier: tier, 
+          adminFeedback: feedback 
+        })
       });
       
       const result = await response.json();
       if (response.ok) {
-        setApplicants(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+        setApplicants(prev => prev.map(a => a.id === id ? { ...a, status, reliabilityTier: tier as any, adminFeedback: feedback } : a));
         
         if (result.emailSent) {
-          toast.success(`Protocol accepted and email dispatched.`);
+          toast.success(`Protocol ${status} and email dispatched.`);
         } else if (result.emailError) {
-          toast.warning(`Status updated, but email protocol failed (Sandbox limit?).`);
+          toast.warning(`Status updated, but email protocol failed.`);
           console.error('Email error:', result.emailError);
         } else {
           toast.success(`Protocol update transmitted: ${status.toUpperCase()}`);
@@ -148,22 +163,6 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
     }
   };
 
-  const handleExportCSV = () => {
-    const headers = ['ID', 'Name', 'Email', 'University', 'Track', 'Status', 'Date'];
-    const rows = applicants.map(a => [
-      a.id, a.fullName, a.email, a.university, a.track, a.status, new Date(a.submittedAt).toLocaleDateString()
-    ]);
-    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `veridex_dossier_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Dossier exported successfully');
-  };
-
   const handleReroute = async (id: string) => {
     setIsUpdatingStatus(id);
     try {
@@ -171,8 +170,10 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${publicAnonKey}` }
       });
+      const result = await response.json();
       if (response.ok) {
-        toast.success('Protocol rerouted to Prep Track');
+        if (result.emailSent) toast.success('Reroute successful: Optimization email dispatched.');
+        else toast.warning('Rerouted, but email failed.');
         fetchAllData();
       }
     } catch (err) {
@@ -362,13 +363,20 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                         <div className="text-[12px] opacity-70 truncate max-w-[200px]">{a.university}</div>
                       </td>
                       <td className="py-4 px-4 md:px-6">
-                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
-                          a.status === 'verified' ? 'bg-emerald-500/10 text-emerald-500' : 
-                          a.status === 'flagged' ? 'bg-rose-500/10 text-rose-500' : 
-                          'bg-slate-500/10 text-slate-400'
-                        }`}>
-                          {a.status}
-                        </span>
+                        <div className="flex flex-col items-start gap-1">
+                          <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
+                            a.status === 'verified' ? 'bg-emerald-500/10 text-emerald-500' : 
+                            a.status === 'flagged' ? 'bg-rose-500/10 text-rose-500' : 
+                            'bg-slate-500/10 text-slate-400'
+                          }`}>
+                            {a.status}
+                          </span>
+                          {a.status === 'verified' && a.reliabilityTier && (
+                            <span className="text-[8px] font-bold uppercase tracking-tight opacity-50 px-2 py-0.5 bg-white/5 rounded border border-white/5">
+                              {a.reliabilityTier.replace('_', ' ')}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-4 px-6 text-right hidden md:table-cell opacity-40 text-[11px]">
                         {new Date(a.submittedAt).toLocaleDateString()}
@@ -609,35 +617,78 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
               </div>
 
               {/* Fixed Action Footer */}
-              <div className={`absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-t from-${theme === 'dark' ? '[#0D0D0F]' : 'white'} via-${theme === 'dark' ? '[#0D0D0F]' : 'white'} to-transparent border-t ${borderColor} flex flex-col gap-3 z-20`}>
+              <div className={`absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-t from-${theme === 'dark' ? '[#0D0D0F]' : 'white'} via-${theme === 'dark' ? '[#0D0D0F]' : 'white'} to-transparent border-t ${borderColor} flex flex-col gap-4 z-20`}>
+                
+                {/* Reliability Tier Selector */}
+                <div className="space-y-3">
+                  <div className="flex flex-col gap-2">
+                    <div className="text-[10px] uppercase tracking-widest opacity-40 font-bold">Decision Parameters</div>
+                    
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['high', 'medium', 'under_review'] as const).map(t => (
+                        <button 
+                          key={t}
+                          onClick={() => setTempTier(t)}
+                          className={`px-2 py-1.5 rounded border text-[10px] font-bold uppercase transition-all ${
+                            tempTier === t 
+                            ? 'bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
+                            : `${borderColor} ${inputBg} opacity-50 hover:opacity-100`
+                          }`}
+                        >
+                          {t.replace('_', ' ')}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <textarea 
+                    placeholder="Audit Feedback (Required for Flagging)..."
+                    className={`w-full ${inputBg} border ${borderColor} rounded-xl p-3 text-xs min-h-[80px] focus:ring-1 focus:ring-indigo-500 outline-none`}
+                    value={tempFeedback}
+                    onChange={(e) => setTempFeedback(e.target.value)}
+                  />
+                </div>
+
                 <div className="flex gap-2">
                   <button 
-                    onClick={() => handleStatusUpdate(selectedId, 'verified')}
-                    className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                    onClick={() => handleStatusUpdate(selectedId, 'verified', tempTier, tempFeedback)}
+                    disabled={isUpdatingStatus === selectedId}
+                    className="flex-1 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/20"
                   >
-                    <CheckCircle2 className="w-4 h-4" /> Verify
+                    {isUpdatingStatus === selectedId ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} 
+                    Verify
                   </button>
                   <button 
-                    onClick={() => handleStatusUpdate(selectedId, 'flagged')}
-                    className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 py-3 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                    onClick={() => {
+                      if (!tempFeedback) {
+                        toast.error('Feedback required for flagged protocols.');
+                        return;
+                      }
+                      handleStatusUpdate(selectedId, 'flagged', tempTier, tempFeedback);
+                    }}
+                    disabled={isUpdatingStatus === selectedId}
+                    className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 disabled:opacity-50 text-rose-500 border border-rose-500/20 py-3 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
                   >
-                    <ShieldAlert className="w-4 h-4" /> Flag
+                    {isUpdatingStatus === selectedId ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />} 
+                    Flag
                   </button>
                 </div>
                 <div className="flex gap-2">
                   {selectedApplicant.track === 'core' && (
                     <button 
                       onClick={() => handleReroute(selectedId)}
-                      className="flex-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest"
+                      disabled={isUpdatingStatus === selectedId}
+                      className="flex-1 bg-amber-500/10 hover:bg-amber-500/20 disabled:opacity-50 text-amber-500 border border-amber-500/20 py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all"
                     >
-                      Reroute to Prep
+                      Optimize to Prep
                     </button>
                   )}
                   <button 
                     onClick={() => handleStatusUpdate(selectedId, 'archived')}
-                    className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest"
+                    disabled={isUpdatingStatus === selectedId}
+                    className="flex-1 bg-white/5 hover:bg-white/10 disabled:opacity-50 border border-white/10 py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all"
                   >
-                    Archive
+                    Archive Signal
                   </button>
                 </div>
               </div>

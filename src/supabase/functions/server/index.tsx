@@ -234,12 +234,12 @@ app.get(`${prefix}/admin/applicants`, async (c) => {
 app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
   try {
     const id = c.req.param('id');
-    const { status } = await c.req.json();
+    const { status, reliabilityTier, adminFeedback } = await c.req.json();
     
     const applicant = await kv.get(`applicant:${id}`);
     if (!applicant) return c.json({ success: false, error: 'Not found' }, 404);
     
-    const updated = { ...applicant, status };
+    const updated = { ...applicant, status, reliabilityTier, adminFeedback };
     await kv.set(`applicant:${id}`, updated);
 
     // Automation: Send Status Update Email
@@ -248,36 +248,84 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
 
     if (status === 'verified' || status === 'flagged') {
       try {
-        console.log(`[EMAIL] Attempting to send protocol update to ${applicant.email}...`);
-        const { data: emailData, error: emailErr } = await resend.emails.send({
-          from: 'Veridex Admissions <onboarding@resend.dev>',
-          to: [applicant.email],
-          subject: `Protocol Update: ${status === 'verified' ? 'ACCEPTED' : 'FLAGGED'}`,
-          html: `
-            <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: monospace; padding: 40px; border: 1px solid #27272A; border-radius: 8px;">
-              <h2 style="color: ${status === 'verified' ? '#10B981' : '#EF4444'}; text-transform: uppercase; letter-spacing: 0.1em;">${status === 'verified' ? 'PROTOCOL VERIFIED' : 'PROTOCOL FLAGGED'}</h2>
-              <p style="color: #A1A1AA; line-height: 1.6;">Hello ${applicant.fullName},</p>
-              <p style="color: #A1A1AA; line-height: 1.6;">Your application for the <strong>${applicant.track.toUpperCase()}</strong> track has been processed by our secure node.</p>
-              <p style="color: #FFFFFF; font-weight: bold; background: #18181B; padding: 10px; border-radius: 4px;">
-                ${status === 'verified' ? 'ACCESS GRANTED: You have been accepted into the platform. Welcome to the Veridex core.' : 'ACTION REQUIRED: Your application requires additional evidence or has been rejected at this time.'}
-              </p>
+        console.log(`[EMAIL] Protocol Triggered for ${applicant.email}...`);
+        
+        let subject = '';
+        let bodyHtml = '';
+        const firstName = applicant.fullName.split(' ')[0];
+
+        if (status === 'verified') {
+          const tierMap: any = {
+            'high': 'Verified – High Reliability',
+            'medium': 'Verified – Medium Reliability',
+            'under_review': 'Under Review (Limited Access)'
+          };
+          const displayTier = tierMap[reliabilityTier || 'medium'] || 'Verified – Medium Reliability';
+
+          subject = 'Your application has been approved';
+          bodyHtml = `
+            <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: monospace; padding: 40px; border: 1px solid #27272A; border-radius: 8px; max-width: 600px; margin: auto;">
+              <h2 style="color: #10B981; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #10B981; padding-bottom: 10px;">PROTOCOL VERIFIED</h2>
+              <p style="color: #A1A1AA; line-height: 1.6;">Hello ${firstName},</p>
+              <p style="color: #A1A1AA; line-height: 1.6;">Your application has been reviewed, and you have been accepted into the platform.</p>
+              <p style="color: #A1A1AA; line-height: 1.6;">Based on the skill evidence you submitted, you meet our current standard for task-ready final-year students. You are now eligible to be matched with paid tasks from employers.</p>
+              
+              <div style="background: #18181B; padding: 20px; border-radius: 4px; border-left: 4px solid #10B981; margin: 20px 0;">
+                <p style="margin: 0; font-size: 12px; color: #52525B; text-transform: uppercase;">Your current Reliability Tier is:</p>
+                <p style="margin: 5px 0 0 0; font-weight: bold; font-size: 18px; color: #FFFFFF;">${displayTier}</p>
+              </div>
+
+              <p style="color: #A1A1AA; font-size: 13px;">This tier reflects our confidence in your ability to deliver professional standards, meet deadlines, and represent the platform responsibly.</p>
+              
+              <ul style="color: #A1A1AA; font-size: 12px; line-height: 1.8;">
+                <li>Acceptance does not guarantee task assignment</li>
+                <li>Tasks are matched based on employer needs</li>
+                <li>Your reliability tier can evolve based on performance</li>
+              </ul>
+
+              <p style="color: #FFFFFF; font-weight: bold; margin-top: 30px;">This platform is built on trust. Protect it.</p>
+              
               <div style="margin-top: 30px; border-top: 1px solid #27272A; padding-top: 20px; font-size: 11px; color: #52525B;">
-                <p>Reference ID: ${id}</p>
-                <p>Date: ${new Date().toUTCString()}</p>
+                <p>Veridex Team | Reference: ${id}</p>
               </div>
             </div>
-          `
-        });
+          `;
+        } else if (status === 'flagged') {
+          subject = 'Application review outcome';
+          bodyHtml = `
+            <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: monospace; padding: 40px; border: 1px solid #27272A; border-radius: 8px; max-width: 600px; margin: auto;">
+              <h2 style="color: #EF4444; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #EF4444; padding-bottom: 10px;">AUDIT_INCOMPLETE</h2>
+              <p style="color: #A1A1AA; line-height: 1.6;">Hello ${firstName},</p>
+              <p style="color: #A1A1AA; line-height: 1.6;">We’ve completed a manual review of your application. At this time, we’re unable to approve your profile for task assignment.</p>
+              
+              <div style="background: #18181B; padding: 20px; border-radius: 4px; border-left: 4px solid #EF4444; margin: 20px 0;">
+                <p style="margin: 0; font-size: 12px; color: #52525B; text-transform: uppercase;">Skill-Specific Feedback:</p>
+                <p style="margin: 10px 0 0 0; color: #FFFFFF; font-size: 14px; line-height: 1.5;">${adminFeedback || 'Proof provided does not currently meet the task-ready professional standard required for employer matching.'}</p>
+              </div>
 
-        if (emailErr) {
-          console.error('[EMAIL] Resend Error:', emailErr);
-          emailError = emailErr;
-        } else {
-          console.log('[EMAIL] Success:', emailData);
-          emailSent = true;
+              <p style="color: #A1A1AA; font-size: 13px;">Our platform is designed exclusively for final-year students who demonstrate applied work. You are encouraged to improve your submission and re-apply once your proof of work meets the standard described in our documentation.</p>
+              
+              <p style="color: #FFFFFF; font-weight: bold; margin-top: 30px;">This platform prioritizes employer trust.</p>
+              
+              <div style="margin-top: 30px; border-top: 1px solid #27272A; padding-top: 20px; font-size: 11px; color: #52525B;">
+                <p>Veridex Team | Reference: ${id}</p>
+              </div>
+            </div>
+          `;
+        }
+
+        if (subject && bodyHtml) {
+          const { data: emailData, error: emailErr } = await resend.emails.send({
+            from: 'Veridex Protocol <onboarding@resend.dev>',
+            to: [applicant.email],
+            subject: subject,
+            html: bodyHtml
+          });
+
+          if (emailErr) emailError = emailErr;
+          else emailSent = true;
         }
       } catch (err) {
-        console.error('[EMAIL] Unexpected Exception:', err);
         emailError = err.message;
       }
     }
@@ -286,7 +334,7 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
     await kv.set('audit_logs', [{
       id: `LOG-${Date.now()}`,
       action: 'STATUS_UPDATE',
-      details: `Protocol ${id} (${applicant.email}) updated to ${status}. Email success: ${emailSent}`,
+      details: `Protocol ${id} updated. Status: ${status}. Tier: ${reliabilityTier || 'N/A'}. Email: ${emailSent}`,
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
     
@@ -310,15 +358,52 @@ app.patch(`${prefix}/admin/applicants/:id/reroute`, async (c) => {
     };
     await kv.set(`applicant:${id}`, updated);
 
+    // Send Reroute Email
+    let emailSent = false;
+    let emailError = null;
+    const firstName = applicant.fullName.split(' ')[0];
+    try {
+      const { data, error } = await resend.emails.send({
+        from: 'Veridex Protocol <onboarding@resend.dev>',
+        to: [applicant.email],
+        subject: 'SIGNAL OPTIMIZATION: Rerouting to Preparation Track',
+        html: `
+          <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: monospace; padding: 40px; border: 1px solid #27272A; border-radius: 8px; max-width: 600px; margin: auto;">
+            <h2 style="color: #F59E0B; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #F59E0B; padding-bottom: 10px;">SIGNAL_OPTIMIZATION</h2>
+            <p style="color: #A1A1AA; line-height: 1.6;">Hello ${firstName},</p>
+            <p style="color: #A1A1AA; line-height: 1.6;">We have completed the audit of your technical signals.</p>
+            <p style="color: #A1A1AA; line-height: 1.6;">Based on the evidence provided, we are rerouting your application to the <strong>Veridex Prep Track</strong>.</p>
+            
+            <div style="background: #18181B; padding: 20px; border-radius: 4px; border-left: 4px solid #F59E0B; margin: 20px 0;">
+              <p style="margin: 0; font-weight: bold; color: #FFFFFF;">The Strategy:</p>
+              <p style="margin: 10px 0 0 0; color: #A1A1AA; font-size: 13px; line-height: 1.5;">The Prep track is specifically designed as a bridge—allowing you to harden your skills and refine your portfolio before entering the high-stakes Core environment.</p>
+            </div>
+
+            <p style="color: #A1A1AA; font-size: 13px;">This move ensures you have a foundational spot in the ecosystem while you work toward the professional standard required for promotion to the Core track.</p>
+            
+            <p style="color: #FFFFFF; font-weight: bold; margin-top: 30px;">We don't lower our standards, we help you meet them.</p>
+            
+            <div style="margin-top: 30px; border-top: 1px solid #27272A; padding-top: 20px; font-size: 11px; color: #52525B;">
+              <p>Veridex Team | Reference: ${id}</p>
+            </div>
+          </div>
+        `
+      });
+      if (error) emailError = error;
+      else emailSent = true;
+    } catch (e) {
+      emailError = e.message;
+    }
+
     const logs = await kv.get('audit_logs') || [];
     await kv.set('audit_logs', [{
       id: `LOG-${Date.now()}`,
       action: 'PROTOCOL_REROUTE',
-      details: `Identity ${applicant.email} rerouted from Core to Prep track.`,
+      details: `Identity ${applicant.email} rerouted from Core to Prep track. Email: ${emailSent}`,
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
 
-    return c.json({ success: true });
+    return c.json({ success: true, emailSent, emailError });
   } catch (err) {
     return c.json({ success: false, error: err.message }, 500);
   }
