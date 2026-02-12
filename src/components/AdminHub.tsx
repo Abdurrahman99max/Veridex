@@ -92,6 +92,8 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
   const [tempTier, setTempTier] = useState<'high' | 'medium' | 'under_review'>('medium');
   const [tempFeedback, setTempFeedback] = useState('');
 
+  const selectedApplicant = applicants.find(a => a.id === selectedId);
+
   useEffect(() => {
     if (selectedId && selectedApplicant) {
       setTempTier(selectedApplicant.reliabilityTier || 'medium');
@@ -222,7 +224,22 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
     }
   };
 
-  const selectedApplicant = applicants.find(a => a.id === selectedId);
+  const handleExportCSV = () => {
+    const headers = ['ID', 'Name', 'Email', 'University', 'Track', 'Status', 'Date'];
+    const rows = applicants.map(a => [
+      a.id, a.fullName, a.email, a.university, a.track, a.status, new Date(a.submittedAt).toLocaleDateString()
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `veridex_dossier_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Dossier exported successfully');
+  };
+
   const filteredApplicants = applicants.filter(a => {
     const matchesTrack = filter === 'all' || a.track === filter;
     const matchesSearch = 
