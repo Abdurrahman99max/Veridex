@@ -160,12 +160,12 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ track, onReturn })
                 <div className="space-y-3 sm:space-y-4">
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 rounded-full border border-amber-100">
                     <span className="text-[9px] sm:text-[10px] font-mono font-bold tracking-widest text-amber-600 uppercase">
-                      STATUS: BRIDGE TRACK QUEUED
+                      STATUS: PREP PROGRAM QUEUED
                     </span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-urbanist font-bold text-slate-900 tracking-tight">Ready for Growth</h2>
                   <p className="text-slate-500 font-inter leading-relaxed max-w-sm mx-auto text-xs sm:text-sm">
-                    You've been successfully registered for the <span className="text-slate-900 font-bold underline decoration-amber-200 decoration-4 underline-offset-4">Bridge Track</span>. We'll reach out when the next cohort begins.
+                    You've been successfully registered for the <span className="text-slate-900 font-bold underline decoration-amber-200 decoration-4 underline-offset-4">Preparation Program</span>. We'll reach out when the next cohort begins.
                   </p>
                 </div>
 

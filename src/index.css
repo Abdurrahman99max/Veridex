@@ -1243,6 +1243,10 @@
     flex-direction: column;
   }
 
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+
   .items-center {
     align-items: center;
   }
@@ -2542,6 +2546,10 @@
     .text-white\/70 {
       color: color-mix(in oklab, var(--color-white) 70%, transparent);
     }
+  }
+
+  .capitalize {
+    text-transform: capitalize;
   }
 
   .uppercase {

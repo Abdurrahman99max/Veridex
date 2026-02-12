@@ -206,7 +206,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
             <div className="space-y-4">
               <h3 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900 leading-tight">What do you want to become task-ready in?</h3>
               <p className="text-slate-500 text-sm font-inter leading-relaxed">
-                Choose the skill you are actively committing to improve. This helps us design the bridge program for you.
+                Choose the skill you are actively committing to improve. This helps us design the preparation program for you.
               </p>
               
               <div className="pt-2">

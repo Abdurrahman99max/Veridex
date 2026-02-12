@@ -350,7 +350,7 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
   }
 });
 
-// 6. Move Core to Bridge Track
+// 6. Move Core to Preparation Program
 app.patch(`${prefix}/admin/applicants/:id/reroute`, async (c) => {
   try {
     const id = c.req.param('id');
@@ -361,7 +361,7 @@ app.patch(`${prefix}/admin/applicants/:id/reroute`, async (c) => {
     const updated = { 
       ...applicant, 
       track: 'prep', 
-      tags: [...(applicant.tags || []), 'MOVED_TO_BRIDGE_TRACK'] 
+      tags: [...(applicant.tags || []), 'MOVED_TO_PREP_PROGRAM'] 
     };
     await kv.set(`applicant:${id}`, updated);
 
@@ -379,11 +379,11 @@ app.patch(`${prefix}/admin/applicants/:id/reroute`, async (c) => {
             <h2 style="color: #F59E0B; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #F59E0B; padding-bottom: 10px;">APPLICATION UPDATE</h2>
             <p style="color: #A1A1AA; line-height: 1.6;">Hello ${firstName},</p>
             <p style="color: #A1A1AA; line-height: 1.6;">We have completed the review of your technical skills.</p>
-            <p style="color: #A1A1AA; line-height: 1.6;">Based on the details provided, we are moving your application to the <strong>Veridex Bridge Track</strong>.</p>
+            <p style="color: #A1A1AA; line-height: 1.6;">Based on the details provided, we are moving your application to the <strong>Veridex Preparation Program</strong>.</p>
             
             <div style="background: #18181B; padding: 20px; border-radius: 4px; border-left: 4px solid #F59E0B; margin: 20px 0;">
               <p style="margin: 0; font-weight: bold; color: #FFFFFF;">Our Recommendation:</p>
-              <p style="margin: 10px 0 0 0; color: #A1A1AA; font-size: 13px; line-height: 1.5;">The Bridge track is designed to help you strengthen your portfolio before entering the Core environment.</p>
+              <p style="margin: 10px 0 0 0; color: #A1A1AA; font-size: 13px; line-height: 1.5;">The Preparation Program is designed to help you strengthen your portfolio before entering the Core environment.</p>
             </div>
 
             <p style="color: #A1A1AA; font-size: 13px;">This move ensures you have a spot in the ecosystem while you work toward the standard required for promotion to the Core track.</p>
@@ -406,7 +406,7 @@ app.patch(`${prefix}/admin/applicants/:id/reroute`, async (c) => {
     await kv.set('audit_logs', [{
       id: `LOG-${Date.now()}`,
       action: 'TRACK_MOVE',
-      details: `Moved ${applicant.email} to Bridge track. Email Sent: ${emailSent}`,
+      details: `Moved ${applicant.email} to Prep Program. Email Sent: ${emailSent}`,
       operator: operator || 'ADMIN',
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));

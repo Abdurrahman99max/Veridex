@@ -114,7 +114,7 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
             <div className="space-y-3 px-2">
               <h3 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900 leading-tight">Read carefully before submitting</h3>
               <p className="text-slate-500 text-xs sm:text-sm font-inter leading-relaxed">
-                Veridex's Bridge Track is designed for students who are willing to commit time and effort to becoming task-ready.<br className="hidden sm:block" />
+                Veridex's Preparation Program is designed for students who are willing to commit time and effort to becoming task-ready.<br className="hidden sm:block" />
                 <span className="font-bold">This is not a guaranteed path into Veridex Core.</span>
               </p>
             </div>
@@ -185,7 +185,7 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
               disabled={!isPrepValid}
               className={`w-full h-14 rounded-xl shadow-xl transition-all group cursor-pointer font-urbanist font-bold mt-4 sm:mt-8 text-sm sm:text-base ${isPrepValid ? 'bg-slate-900 hover:bg-black text-white' : 'bg-slate-100 text-slate-300'}`}
             >
-              Join the Bridge Track
+              Join the Preparation Program
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Button>
           </motion.div>

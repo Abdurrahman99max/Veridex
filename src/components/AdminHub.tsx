@@ -209,7 +209,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
       });
       const result = await response.json();
       if (response.ok) {
-        if (result.emailSent) toast.success('Moved to Bridge Track: Update email sent.');
+        if (result.emailSent) toast.success('Moved to Preparation Program: Update email sent.');
         else toast.warning('Moved track, but email failed.');
         fetchAllData();
       }
@@ -344,7 +344,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
           <Zap className="w-4 h-4" /> Core Track
         </button>
         <button onClick={() => { setActiveTab('applicants'); setFilter('prep'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-all ${activeTab === 'applicants' && filter === 'prep' ? 'bg-indigo-500/10 text-indigo-500 font-bold' : 'hover:bg-white/5'}`}>
-          <Activity className="w-4 h-4" /> Bridge Track
+          <Activity className="w-4 h-4" /> Prep Program
         </button>
         
         <div className="text-[10px] uppercase tracking-widest opacity-40 font-bold px-3 py-2 mt-6">Administrative</div>
@@ -610,7 +610,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                     <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest opacity-40">
                       <span>ID: {selectedApplicant.id}</span>
                       <span className="w-1 h-1 rounded-full bg-slate-500" />
-                      <span>{selectedApplicant.track} Track</span>
+                      <span>{selectedApplicant.track === 'core' ? 'Core Track' : 'Preparation Program'}</span>
                     </div>
                   </div>
                 </div>
@@ -648,19 +648,72 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                   </section>
 
                   <section className="space-y-4">
-                    <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Technical Review</div>
+                    <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">
+                      {selectedApplicant.track === 'core' ? 'Technical Review' : 'Program Intent'}
+                    </div>
                     <div className={`p-6 rounded-2xl bg-white/5 border border-white/5 space-y-4`}>
-                      <div className="space-y-2">
-                        <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Project Description</div>
-                        <p className={`text-sm leading-relaxed ${textColor}`}>{selectedApplicant.rationale}</p>
-                      </div>
-                      <div className="h-px bg-white/5" />
-                      <div className="flex items-center justify-between">
-                         <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Skill Evidence</div>
-                         <a href={selectedApplicant.proofUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[10px] font-bold text-indigo-500 hover:underline">
-                           View Link <ExternalLink className="w-3 h-3" />
-                         </a>
-                      </div>
+                      {selectedApplicant.track === 'core' ? (
+                        <>
+                          <div className="space-y-2">
+                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Project Description</div>
+                            <p className={`text-sm leading-relaxed ${textColor}`}>{selectedApplicant.rationale}</p>
+                          </div>
+                          <div className="h-px bg-white/5" />
+                          <div className="flex items-center justify-between">
+                             <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Skill Evidence</div>
+                             <a href={selectedApplicant.proofUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[10px] font-bold text-indigo-500 hover:underline">
+                               View Link <ExternalLink className="w-3 h-3" />
+                             </a>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                          <div className="space-y-1">
+                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Application Reason</div>
+                            <p className={`text-sm ${textColor}`}>
+                              {selectedApplicant.motivation === 'no_samples' ? "Doesn't have strong work samples yet" :
+                               selectedApplicant.motivation === 'learning_structure' ? "Still learning and needs structure" :
+                               selectedApplicant.motivation === 'employable' ? "Wants to become employable before graduation" :
+                               selectedApplicant.motivation === 'rejected' ? "Has been rejected and wants to improve" :
+                               selectedApplicant.motivation || 'Not provided'}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Skill Level</div>
+                            <p className={`text-sm ${textColor} capitalize`}>
+                              {selectedApplicant.skillLevel === 'self_taught' ? 'Self-taught' : 
+                               selectedApplicant.skillLevel || 'Not provided'}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Primary Program Goal</div>
+                            <p className={`text-sm ${textColor}`}>
+                              {selectedApplicant.primaryGoal === 'apply_core' ? 'Apply to Veridex Core' :
+                               selectedApplicant.primaryGoal === 'employable' ? 'Become employable' :
+                               selectedApplicant.primaryGoal === 'portfolio' ? 'Build a real portfolio' :
+                               selectedApplicant.primaryGoal || 'Not provided'}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Weekly Capacity</div>
+                            <p className={`text-sm ${textColor}`}>{selectedApplicant.weeklyHours || 'Not provided'}</p>
+                          </div>
+                          <div className="sm:col-span-2 space-y-2 pt-2 border-t border-white/5">
+                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Learning Channels</div>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedApplicant.learningMethods && selectedApplicant.learningMethods.length > 0 ? (
+                                selectedApplicant.learningMethods.map((m: string) => (
+                                  <span key={m} className="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-[10px] uppercase font-bold opacity-70">
+                                    {m.replace('_', ' ')}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-xs opacity-40 italic">No methods selected</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </section>
 
@@ -773,7 +826,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                       >
                         <div className="flex items-center gap-3">
                           <Undo2 className="w-4 h-4" />
-                          <span className="text-[10px] font-bold uppercase tracking-widest">Move to Bridge Track</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Move to Prep Program</span>
                         </div>
                         <ChevronRight className="w-4 h-4 opacity-40 group-hover:translate-x-1" />
                       </button>

@@ -200,10 +200,10 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                   >
                     <div className="flex justify-between items-start mb-4">
                       <span className="text-[10px] font-mono font-bold tracking-widest text-amber-600 uppercase bg-amber-50 px-2 py-1 rounded">
-                        BRIDGE TRACK
+                        PREP PROGRAM
                       </span>
                     </div>
-                    <h3 className="text-lg sm:text-xl font-urbanist font-bold text-slate-900">Join Bridge Track</h3>
+                    <h3 className="text-lg sm:text-xl font-urbanist font-bold text-slate-900">Preparation Program</h3>
                     <p className="text-xs sm:text-sm text-slate-500 font-inter mt-1">Penultimate year or building skills</p>
                     <div className="mt-6 flex items-center text-xs font-medium text-slate-400 group-hover:text-slate-900 transition-colors">
                       Learn & Grow <ArrowRight className="ml-1 w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
@@ -345,7 +345,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                                     type="email"
                                     value={formData.email}
                                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                    placeholder="Personal email (e.g. name@gmail.com)"
+                                    placeholder="Private email (e.g. name@gmail.com)"
                                     className={`pl-12 h-14 border-slate-200 transition-all font-inter bg-white focus:border-slate-900 ${isEmailProvided ? 'border-indigo-200' : ''}`}
                                   />
                                 </div>
@@ -375,9 +375,9 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                           <Info className="w-5 h-5 text-indigo-500" />
                         </div>
                         <div>
-                          <h4 className="text-sm font-urbanist font-bold text-slate-900">Bridge Track Application</h4>
+                          <h4 className="text-sm font-urbanist font-bold text-slate-900">Preparation Program Application</h4>
                           <p className="text-slate-500 text-[11px] sm:text-xs font-inter mt-1 leading-relaxed">
-                            This track is for students who want to become task-ready before applying to Veridex Core. <br className="hidden sm:block" />
+                            This program is for students who want to become task-ready before applying to Veridex Core. <br className="hidden sm:block" />
                             <span className="font-bold">This is not the Veridex Core application.</span>
                           </p>
                         </div>
@@ -406,15 +406,15 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-urbanist font-bold text-slate-900">Email Address</Label>
+                        <Label className="text-sm font-urbanist font-bold text-slate-900">Private Email Address</Label>
                         <Input 
                           type="email"
                           value={formData.email}
                           onChange={(e) => setFormData({...formData, email: e.target.value})}
-                          placeholder="e.g. name@university.edu"
+                          placeholder="e.g. name@gmail.com"
                           className="h-14 border-slate-200 focus:border-slate-900 transition-all font-inter bg-white"
                         />
-                        <p className="text-[10px] text-slate-400 font-inter">We'll use this to send you automated program updates and resources.</p>
+                        <p className="text-[10px] text-slate-400 font-inter">Please provide a private email (Gmail, Outlook, etc.). Avoid using .edu or student addresses.</p>
                       </div>
 
                       <div className="space-y-2">
