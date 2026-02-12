@@ -70,19 +70,19 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
   const commitmentCards = [
     {
       id: 'core' as CommitmentType,
-      label: 'CORE PROTOCOL',
-      title: 'High-Velocity Delivery',
-      desc: '8–12 hours/week. Designed for students who can commit to 48-hour task turnaround cycles.',
-      status: 'STATUS: ACTIVE_DUTY',
+      label: 'CORE TRACK',
+      title: 'High Availability',
+      desc: '8–12 hours/week. Designed for students who can commit to 48-hour project turnaround cycles.',
+      status: 'ACTIVE STATUS',
       statusColor: 'text-indigo-600 bg-indigo-50',
       icon: Zap
     },
     {
       id: 'adaptive' as CommitmentType,
-      label: 'ADAPTIVE TRACK',
+      label: 'FLEXIBLE TRACK',
       title: 'Sustainable Pacing',
       desc: '4–7 hours/week. Flexible delivery windows that account for exam seasons.',
-      status: 'STATUS: RESERVE',
+      status: 'FLEXIBLE STATUS',
       statusColor: 'text-amber-600 bg-amber-50',
       icon: Calendar
     }
@@ -104,7 +104,7 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
 
   if (isPrep) {
     return (
-      <ApplicationLayout currentStep={4} totalSteps={4} title="Commitment Signal" onBack={onBack}>
+      <ApplicationLayout currentStep={3} totalSteps={3} title="Commitment Level" onBack={onBack}>
         <div className="w-full space-y-8 sm:space-y-12 pb-20">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -114,7 +114,7 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
             <div className="space-y-3 px-2">
               <h3 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900 leading-tight">Read carefully before submitting</h3>
               <p className="text-slate-500 text-xs sm:text-sm font-inter leading-relaxed">
-                Veridex's Preparation Track is designed for students who are willing to commit time and effort to becoming task-ready.<br className="hidden sm:block" />
+                Veridex's Bridge Track is designed for students who are willing to commit time and effort to becoming task-ready.<br className="hidden sm:block" />
                 <span className="font-bold">This is not a guaranteed path into Veridex Core.</span>
               </p>
             </div>
@@ -185,7 +185,7 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
               disabled={!isPrepValid}
               className={`w-full h-14 rounded-xl shadow-xl transition-all group cursor-pointer font-urbanist font-bold mt-4 sm:mt-8 text-sm sm:text-base ${isPrepValid ? 'bg-slate-900 hover:bg-black text-white' : 'bg-slate-100 text-slate-300'}`}
             >
-              Join the Preparation Track
+              Join the Bridge Track
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Button>
           </motion.div>
@@ -196,11 +196,11 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
 
   // CORE TRACK VIEW
   return (
-    <ApplicationLayout currentStep={4} totalSteps={4} title="Operational Capacity" onBack={onBack}>
+    <ApplicationLayout currentStep={4} totalSteps={4} title="Work Capacity" onBack={onBack}>
       <div className="w-full space-y-8 sm:space-y-12 pb-20">
         <div className="text-center space-y-3 px-2">
-          <h2 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900">Delivery Commitment</h2>
-          <p className="text-slate-500 font-inter text-sm max-w-md mx-auto">Select a commitment tier that ensures reliable delivery.</p>
+          <h2 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900">Weekly Commitment</h2>
+          <p className="text-slate-500 font-inter text-sm max-w-md mx-auto">Choose the weekly hours you can realistically dedicate to projects.</p>
         </div>
 
         <div className="grid grid-cols-1 gap-4">
@@ -228,10 +228,10 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
               <div className="p-6 sm:p-8 bg-slate-900 rounded-2xl text-white shadow-2xl shadow-indigo-500/10">
                 <div className="flex items-center gap-3 mb-6">
                   <FileText className="shrink-0 w-5 h-5 text-indigo-400" />
-                  <span className="text-[10px] font-mono font-bold tracking-widest text-indigo-400 uppercase">PROTOCOL: DELIVERY_STMT</span>
+                  <span className="text-[10px] font-mono font-bold tracking-widest text-indigo-400 uppercase">AGREEMENT</span>
                 </div>
                 <p className="text-[13px] sm:text-sm font-inter text-slate-300 leading-relaxed mb-8">
-                  I understand that Core Protocol requires professional-grade delivery and responsiveness. I commit to managing my academic workload alongside these tasks.
+                  I understand that the Core Track requires professional-grade delivery and responsiveness. I commit to managing my academic workload alongside these tasks.
                 </p>
                 <label className="flex items-start gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer group active:scale-[0.99]">
                   <input 
@@ -248,7 +248,7 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
                 disabled={!confirmedStatus.coreConfirmed}
                 className={`w-full h-14 rounded-xl shadow-xl font-urbanist font-bold transition-all text-sm sm:text-base ${confirmedStatus.coreConfirmed ? 'bg-slate-900 hover:bg-black text-white shadow-slate-200' : 'bg-slate-100 text-slate-300 shadow-none'}`}
               >
-                Finalize Verification Protocol
+                Complete Application
                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </motion.div>

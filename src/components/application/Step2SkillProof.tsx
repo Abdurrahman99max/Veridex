@@ -51,8 +51,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
     projectContext: '',
     rationale: '',
     confirmedOriginal: false,
-    confirmedManualReview: true, // Auto-confirming this for Core to match previous flow
-    // Prep track specific
+    confirmedManualReview: true, 
     skillLevel: '',
     learningMethods: [] as string[],
     customSkill: ''
@@ -73,17 +72,17 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
 
   const domains = [
     { id: 'design', label: 'Product Design', icon: Palette, tag: 'UI/UX' },
-    { id: 'development', label: 'Software Engineering', icon: Code2, tag: 'SW_ENG' },
-    { id: 'data', label: 'Data Science & Analytics', icon: Database, tag: 'ANALYTICS' },
-    { id: 'product', label: 'Product Management', icon: Zap, tag: 'STRAT' },
-    { id: 'marketing', label: 'Growth Marketing', icon: BarChart3, tag: 'PERF' },
-    { id: 'content', label: 'Content & Copywriting', icon: FileText, tag: 'COMM' },
-    { id: 'sales', label: 'Sales & Business Development', icon: Briefcase, tag: 'GROWTH' },
-    { id: 'finance', label: 'Finance & Accounting', icon: Coins, tag: 'FINTECH' },
+    { id: 'development', label: 'Software Engineering', icon: Code2, tag: 'DEV' },
+    { id: 'data', label: 'Data Science & Analytics', icon: Database, tag: 'DATA' },
+    { id: 'product', label: 'Product Management', icon: Zap, tag: 'PRODUCT' },
+    { id: 'marketing', label: 'Growth Marketing', icon: BarChart3, tag: 'GROWTH' },
+    { id: 'content', label: 'Content & Copywriting', icon: FileText, tag: 'CONTENT' },
+    { id: 'sales', label: 'Sales & Business Development', icon: Briefcase, tag: 'SALES' },
+    { id: 'finance', label: 'Finance & Accounting', icon: Coins, tag: 'FINANCE' },
     { id: 'operations', label: 'Operations & Logistics', icon: Settings, tag: 'OPS' },
-    { id: 'legal', label: 'Legal & Compliance', icon: Scale, tag: 'COMPLIANCE' },
+    { id: 'legal', label: 'Legal & Compliance', icon: Scale, tag: 'LEGAL' },
     { id: 'cybersecurity', label: 'Cybersecurity', icon: ShieldCheck, tag: 'CYBER' },
-    { id: 'other', label: 'Other', icon: UserPlus, tag: 'CUSTOM' },
+    { id: 'other', label: 'Other', icon: UserPlus, tag: 'OTHER' },
   ];
 
   const getAuditContent = (domain: string) => {
@@ -197,7 +196,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
 
   if (track === 'prep') {
     return (
-      <ApplicationLayout currentStep={2} totalSteps={4} title="Skill Direction" onBack={onBack}>
+      <ApplicationLayout currentStep={2} totalSteps={3} title="Skill Direction" onBack={onBack}>
         <div className="w-full space-y-8 sm:space-y-10 pb-20">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -207,12 +206,12 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
             <div className="space-y-4">
               <h3 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900 leading-tight">What do you want to become task-ready in?</h3>
               <p className="text-slate-500 text-sm font-inter leading-relaxed">
-                Choose the skill you are actively committing to improve. This helps us design the preparation program.
+                Choose the skill you are actively committing to improve. This helps us design the bridge program for you.
               </p>
               
               <div className="pt-2">
                 <GuidancePopover 
-                  title="Preparation Goal Guidance"
+                  title="Goal Guidance"
                   items={[
                     { label: "Interest-Led", description: "Select the field you are most curious about and willing to learn from scratch." },
                     { label: "Market-Driven", description: "Select a field like Development or Data if you want to focus on high-demand technical roles." },
@@ -319,7 +318,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
 
   // CORE TRACK VIEW 
   return (
-    <ApplicationLayout currentStep={2} totalSteps={4} title="Skill Proof Protocol" onBack={onBack}>
+    <ApplicationLayout currentStep={2} totalSteps={4} title="Skill Verification" onBack={onBack}>
       <div className="w-full space-y-12 pb-20">
         <AnimatePresence mode="wait">
           {!selectedDomain ? (
@@ -331,19 +330,19 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
               className="space-y-8"
             >
               <div className="text-center space-y-3 px-2">
-                <h3 className="text-xl font-urbanist font-bold text-slate-900">Select Audit Domain</h3>
-                <p className="text-sm text-slate-500 font-inter">Choose the single skill vertical you will verify.</p>
+                <h3 className="text-xl font-urbanist font-bold text-slate-900">Select your specialty</h3>
+                <p className="text-sm text-slate-500 font-inter">Select the primary skill you want us to review.</p>
                 
                 <div className="pt-2">
                   <GuidancePopover 
-                    title="Audit Vertical Guidance"
+                    title="Specialty Guidance"
                     items={[
                       { label: "Design", description: "UI/UX, Product, or Graphic systems." },
                       { label: "Development", description: "Frontend, Backend, Fullstack, or Web3." },
                       { label: "Product", description: "Strategy, PRDs, and Constraint management." },
                       { label: "Growth", description: "Data-backed marketing and funnel optimization." }
                     ]}
-                    footer="Select the vertical where you have the strongest tangible proof of execution."
+                    footer="Select the area where you have the strongest tangible proof of work."
                   />
                 </div>
               </div>
@@ -378,7 +377,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
                   <div className="flex items-center gap-3">
                     <Terminal className="w-5 h-5 text-indigo-400 shrink-0" />
                     <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-indigo-400 uppercase truncate max-w-[150px] sm:max-w-none">
-                      PROTOCOL: {(selectedDomain === 'other' ? (formData.customSkill || 'CUSTOM') : selectedDomain).toUpperCase()}_AUDIT
+                      DOMAIN: {(selectedDomain === 'other' ? (formData.customSkill || 'CUSTOM') : selectedDomain).toUpperCase()}
                     </span>
                   </div>
                   <button 
@@ -388,9 +387,9 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
                     [ CHANGE ]
                   </button>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-urbanist font-bold mb-2">Technical Submission</h3>
+                <h3 className="text-xl sm:text-2xl font-urbanist font-bold mb-2">Technical Proof</h3>
                 <p className="text-slate-400 text-xs sm:text-sm font-inter leading-relaxed">
-                  Provide a single, definitive proof of your execution capability.
+                  Provide a single, definitive proof of your work capability.
                 </p>
               </div>
 
@@ -426,7 +425,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
                     <div className="space-y-3 p-4 rounded-xl border border-rose-50 bg-rose-50/10">
                       <div className="flex items-center gap-2 text-rose-600">
                         <XCircle className="w-4 h-4" />
-                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider">REJECTION_CRITERIA</span>
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider">NOT ACCEPTABLE</span>
                       </div>
                       <ul className="space-y-1.5">
                         {auditContent.rejection.map((item: string, i: number) => (
@@ -454,7 +453,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
 
                   <div className="space-y-2">
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-1">
-                      <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">TECHNICAL RATIONALE</Label>
+                      <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">PROJECT DETAILS</Label>
                       <span className={`text-[10px] font-mono font-bold ${rationaleWordCount < 20 ? 'text-rose-500' : 'text-emerald-500'}`}>
                         {rationaleWordCount} WORDS (MIN 20)
                       </span>
@@ -478,8 +477,8 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
                     className="shrink-0 mt-1 w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                   />
                   <div className="space-y-1 min-w-0">
-                    <p className="text-sm font-urbanist font-bold text-slate-900">Original Execution</p>
-                    <p className="text-[11px] sm:text-xs text-slate-500 leading-tight">I certify that this submission represents original work.</p>
+                    <p className="text-sm font-urbanist font-bold text-slate-900">Original Work</p>
+                    <p className="text-[11px] sm:text-xs text-slate-500 leading-tight">I certify that this submission represents my original work.</p>
                   </div>
                 </label>
               </div>
@@ -489,7 +488,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
                 disabled={!isCoreValid || (selectedDomain === 'other' && !formData.customSkill)}
                 className={`w-full h-14 rounded-xl shadow-xl transition-all font-urbanist font-bold text-sm sm:text-base ${isCoreValid && (selectedDomain !== 'other' || formData.customSkill) ? 'bg-slate-900 hover:bg-black text-white shadow-slate-200' : 'bg-slate-100 text-slate-300 shadow-none'}`}
               >
-                Confirm Technical Submission
+                Submit Proof of Work
                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </motion.div>

@@ -104,13 +104,13 @@ app.post(`${prefix}/submit-application`, async (c) => {
     const data = await c.req.json();
     const email = data.email.toLowerCase().trim();
     
-    // 🛡️ IDENTITY LOCK: Check for existing email to prevent duplicates
+    // Check for existing email
     const emailMap = await kv.get('email_to_id_map') || {};
     if (emailMap[email]) {
       return c.json({ 
         success: false, 
-        error: 'IDENTITY_ALREADY_REGISTERED',
-        message: 'This protocol already exists in our secure database.' 
+        error: 'EMAIL_ALREADY_REGISTERED',
+        message: 'This email is already registered.' 
       }, 409);
     }
 
@@ -119,9 +119,9 @@ app.post(`${prefix}/submit-application`, async (c) => {
     // Auto-tagging logic
     const tags = [];
     if (email.endsWith('.edu') || email.endsWith('.edu.ng')) tags.push('UNIVERSITY MAIL');
-    if (data.rationale && data.rationale.length > 100) tags.push('DETAILED PROTOCOL');
-    if (data.track === 'core') tags.push('STEADY PROTOCOL');
-    if (data.documentPath) tags.push('TRUST_ANCHOR');
+    if (data.rationale && data.rationale.length > 100) tags.push('DETAILED SUBMISSION');
+    if (data.track === 'core') tags.push('STEADY APPLICANT');
+    if (data.documentPath) tags.push('VERIFIED_ID');
     
     const applicant = {
       ...data,
@@ -135,7 +135,7 @@ app.post(`${prefix}/submit-application`, async (c) => {
     // Save to KV store
     await kv.set(`applicant:${id}`, applicant);
     
-    // Update the Identity Lock map
+    // Update the Identity map
     emailMap[email] = id;
     await kv.set('email_to_id_map', emailMap);
     
@@ -148,8 +148,8 @@ app.post(`${prefix}/submit-application`, async (c) => {
     await kv.set('audit_logs', [{
       id: `LOG-${Date.now()}`,
       action: 'NEW_APPLICATION',
-      details: `Signal received from ${email} (${data.track})`,
-      operator: 'SYSTEM_PROTOCOL',
+      details: `Received application from ${email} (${data.track})`,
+      operator: 'SYSTEM',
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
 
@@ -181,11 +181,11 @@ app.post(`${prefix}/admin/request-otp`, async (c) => {
     const { error } = await resend.emails.send({
       from: 'Veridex Hub <onboarding@resend.dev>',
       to: [email],
-      subject: 'Veridex Access Protocol',
+      subject: 'Veridex Access Code',
       html: `
         <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: monospace; padding: 40px; border-radius: 8px; max-width: 400px; margin: 0 auto;">
           <h1 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.2em; color: #71717A; margin: 0;">Identity Verification</h1>
-          <p style="font-size: 14px; color: #A1A1AA; margin-bottom: 30px;">Enter the following protocol to authorize your session.</p>
+          <p style="font-size: 14px; color: #A1A1AA; margin-bottom: 30px;">Enter the following code to authorize your session.</p>
           <div style="background-color: #18181B; border: 1px solid #27272A; padding: 24px; text-align: center; border-radius: 4px;">
             <span style="font-size: 32px; font-weight: bold; letter-spacing: 0.3em; color: #FFFFFF;">${otp}</span>
           </div>
@@ -249,7 +249,7 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
 
     if (status === 'verified' || status === 'flagged') {
       try {
-        console.log(`[EMAIL] Protocol Triggered for ${applicant.email}...`);
+        console.log(`[EMAIL] Processing update for ${applicant.email}...`);
         
         let subject = '';
         let bodyHtml = '';
@@ -266,7 +266,7 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
           subject = 'Your application has been approved';
           bodyHtml = `
             <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: monospace; padding: 40px; border: 1px solid #27272A; border-radius: 8px; max-width: 600px; margin: auto;">
-              <h2 style="color: #10B981; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #10B981; padding-bottom: 10px;">PROTOCOL VERIFIED</h2>
+              <h2 style="color: #10B981; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #10B981; padding-bottom: 10px;">APPLICATION APPROVED</h2>
               <p style="color: #A1A1AA; line-height: 1.6;">Hello ${firstName},</p>
               <p style="color: #A1A1AA; line-height: 1.6;">Your application has been reviewed, and you have been accepted into the platform.</p>
               <p style="color: #A1A1AA; line-height: 1.6;">Based on the skill evidence you submitted, you meet our current standard for task-ready final-year students. You are now eligible to be matched with paid tasks from employers.</p>
@@ -292,20 +292,19 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
             </div>
           `;
         } else if (status === 'flagged') {
-          subject = 'Application review outcome';
+          subject = 'Update regarding your application';
           bodyHtml = `
             <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: monospace; padding: 40px; border: 1px solid #27272A; border-radius: 8px; max-width: 600px; margin: auto;">
-              <h2 style="color: #EF4444; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #EF4444; padding-bottom: 10px;">AUDIT_INCOMPLETE</h2>
+              <h2 style="color: #EF4444; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #EF4444; padding-bottom: 10px;">APPLICATION NOT APPROVED</h2>
               <p style="color: #A1A1AA; line-height: 1.6;">Hello ${firstName},</p>
               <p style="color: #A1A1AA; line-height: 1.6;">We’ve completed a manual review of your application. At this time, we’re unable to approve your profile for task assignment.</p>
               
               <div style="background: #18181B; padding: 20px; border-radius: 4px; border-left: 4px solid #EF4444; margin: 20px 0;">
-                <p style="margin: 0; font-size: 12px; color: #52525B; text-transform: uppercase;">🔹 Skill-Specific Feedback Block:</p>
+                <p style="margin: 0; font-size: 12px; color: #52525B; text-transform: uppercase;">Review Feedback:</p>
                 <p style="margin: 10px 0 10px 0; color: #FFFFFF; font-size: 14px; line-height: 1.5;">${adminFeedback || 'Proof provided does not currently meet the task-ready professional standard required for employer matching.'}</p>
                 
                 <div style="font-size: 12px; margin-top: 15px; border-top: 1px solid #27272A; padding-top: 10px;">
-                  <p style="color: #EF4444; margin: 5px 0;"><strong>❌ What we cannot accept:</strong> generic coursework, unverified certificates, incomplete projects.</p>
-                  <p style="color: #10B981; margin: 5px 0;"><strong>✅ What acceptable proof looks like:</strong> live production links, verifiable GitHub commits, signed technical endorsements.</p>
+                  <p style="color: #EF4444; margin: 5px 0;"><strong>What we look for:</strong> We prioritize live production links, verifiable GitHub commits, and signed technical endorsements.</p>
                 </div>
               </div>
 
@@ -322,7 +321,7 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
 
         if (subject && bodyHtml) {
           const { data: emailData, error: emailErr } = await resend.emails.send({
-            from: 'Veridex Protocol <onboarding@resend.dev>',
+            from: 'Veridex Team <onboarding@resend.dev>',
             to: [applicant.email],
             subject: subject,
             html: bodyHtml
@@ -340,8 +339,8 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
     await kv.set('audit_logs', [{
       id: `LOG-${Date.now()}`,
       action: 'STATUS_UPDATE',
-      details: `Protocol ${id} updated. Status: ${status}. Tier: ${reliabilityTier || 'N/A'}. Email: ${emailSent}`,
-      operator: operator || 'UNKNOWN_ADMIN',
+      details: `Updated ${id} status to ${status}. Tier: ${reliabilityTier || 'N/A'}. Email Sent: ${emailSent}`,
+      operator: operator || 'ADMIN',
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
     
@@ -351,7 +350,7 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
   }
 });
 
-// 6. Reroute Core to Prep
+// 6. Move Core to Bridge Track
 app.patch(`${prefix}/admin/applicants/:id/reroute`, async (c) => {
   try {
     const id = c.req.param('id');
@@ -362,34 +361,34 @@ app.patch(`${prefix}/admin/applicants/:id/reroute`, async (c) => {
     const updated = { 
       ...applicant, 
       track: 'prep', 
-      tags: [...(applicant.tags || []), 'REROUTED_FROM_CORE'] 
+      tags: [...(applicant.tags || []), 'MOVED_TO_BRIDGE_TRACK'] 
     };
     await kv.set(`applicant:${id}`, updated);
 
-    // Send Reroute Email
+    // Send Update Email
     let emailSent = false;
     let emailError = null;
     const firstName = applicant.fullName.split(' ')[0];
     try {
       const { data, error } = await resend.emails.send({
-        from: 'Veridex Protocol <onboarding@resend.dev>',
+        from: 'Veridex Team <onboarding@resend.dev>',
         to: [applicant.email],
-        subject: 'SIGNAL OPTIMIZATION: Rerouting to Preparation Track',
+        subject: 'Update regarding your application',
         html: `
           <div style="background-color: #0A0A0B; color: #FFFFFF; font-family: monospace; padding: 40px; border: 1px solid #27272A; border-radius: 8px; max-width: 600px; margin: auto;">
-            <h2 style="color: #F59E0B; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #F59E0B; padding-bottom: 10px;">SIGNAL_OPTIMIZATION</h2>
+            <h2 style="color: #F59E0B; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #F59E0B; padding-bottom: 10px;">APPLICATION UPDATE</h2>
             <p style="color: #A1A1AA; line-height: 1.6;">Hello ${firstName},</p>
-            <p style="color: #A1A1AA; line-height: 1.6;">We have completed the audit of your technical signals.</p>
-            <p style="color: #A1A1AA; line-height: 1.6;">Based on the evidence provided, we are rerouting your application to the <strong>Veridex Prep Track</strong>.</p>
+            <p style="color: #A1A1AA; line-height: 1.6;">We have completed the review of your technical skills.</p>
+            <p style="color: #A1A1AA; line-height: 1.6;">Based on the details provided, we are moving your application to the <strong>Veridex Bridge Track</strong>.</p>
             
             <div style="background: #18181B; padding: 20px; border-radius: 4px; border-left: 4px solid #F59E0B; margin: 20px 0;">
-              <p style="margin: 0; font-weight: bold; color: #FFFFFF;">The Strategy:</p>
-              <p style="margin: 10px 0 0 0; color: #A1A1AA; font-size: 13px; line-height: 1.5;">The Prep track is specifically designed as a bridge—allowing you to harden your skills and refine your portfolio before entering the high-stakes Core environment.</p>
+              <p style="margin: 0; font-weight: bold; color: #FFFFFF;">Our Recommendation:</p>
+              <p style="margin: 10px 0 0 0; color: #A1A1AA; font-size: 13px; line-height: 1.5;">The Bridge track is designed to help you strengthen your portfolio before entering the Core environment.</p>
             </div>
 
-            <p style="color: #A1A1AA; font-size: 13px;">This move ensures you have a foundational spot in the ecosystem while you work toward the professional standard required for promotion to the Core track.</p>
+            <p style="color: #A1A1AA; font-size: 13px;">This move ensures you have a spot in the ecosystem while you work toward the standard required for promotion to the Core track.</p>
             
-            <p style="color: #FFFFFF; font-weight: bold; margin-top: 30px;">We don't lower our standards, we help you meet them.</p>
+            <p style="color: #FFFFFF; font-weight: bold; margin-top: 30px;">We’re here to help you reach the professional standard.</p>
             
             <div style="margin-top: 30px; border-top: 1px solid #27272A; padding-top: 20px; font-size: 11px; color: #52525B;">
               <p>Veridex Team | Reference: ${id}</p>
@@ -406,9 +405,9 @@ app.patch(`${prefix}/admin/applicants/:id/reroute`, async (c) => {
     const logs = await kv.get('audit_logs') || [];
     await kv.set('audit_logs', [{
       id: `LOG-${Date.now()}`,
-      action: 'PROTOCOL_REROUTE',
-      details: `Identity ${applicant.email} rerouted from Core to Prep track. Email: ${emailSent}`,
-      operator: operator || 'UNKNOWN_ADMIN',
+      action: 'TRACK_MOVE',
+      details: `Moved ${applicant.email} to Bridge track. Email Sent: ${emailSent}`,
+      operator: operator || 'ADMIN',
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
 
@@ -418,7 +417,7 @@ app.patch(`${prefix}/admin/applicants/:id/reroute`, async (c) => {
   }
 });
 
-// 7. Delete Protocol
+// 7. Delete Application
 app.post(`${prefix}/admin/applicants/:id/delete`, async (c) => {
   try {
     const id = c.req.param('id');
@@ -439,9 +438,9 @@ app.post(`${prefix}/admin/applicants/:id/delete`, async (c) => {
     const logs = await kv.get('audit_logs') || [];
     await kv.set('audit_logs', [{
       id: `LOG-${Date.now()}`,
-      action: 'PROTOCOL_DELETED',
-      details: `Identity ${email} removed.`,
-      operator: operator || 'UNKNOWN_ADMIN',
+      action: 'APPLICATION_DELETED',
+      details: `Deleted application from ${email}.`,
+      operator: operator || 'ADMIN',
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
 
@@ -451,7 +450,7 @@ app.post(`${prefix}/admin/applicants/:id/delete`, async (c) => {
   }
 });
 
-// 8. Get Audit Logs
+// 8. Get Activity History
 app.get(`${prefix}/admin/audit-logs`, async (c) => {
   try {
     const logs = await kv.get('audit_logs') || [];

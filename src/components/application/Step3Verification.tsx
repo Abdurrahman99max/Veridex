@@ -55,7 +55,7 @@ export const Step3Verification: React.FC<VerificationProps> = ({ onNext, onBack,
     setIsUploading(true);
     setStatus('encrypting');
     
-    // Aesthetic delay for "Encryption"
+    // Aesthetic delay for processing
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     setStatus('uploading');
@@ -65,7 +65,6 @@ export const Step3Verification: React.FC<VerificationProps> = ({ onNext, onBack,
       const emailFolder = prevData.email.replace(/[^a-zA-Z0-9]/g, '_');
       const filePath = `verification/${emailFolder}/${fileName}`;
 
-      // Use the Veridex Server as a secure proxy to bypass RLS on private buckets
       const formData = new FormData();
       formData.append('file', file);
       formData.append('path', filePath);
@@ -80,7 +79,7 @@ export const Step3Verification: React.FC<VerificationProps> = ({ onNext, onBack,
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.error || 'Vault transmission failed');
+        throw new Error(errData.error || 'Upload failed');
       }
 
       const result = await response.json();
@@ -89,9 +88,9 @@ export const Step3Verification: React.FC<VerificationProps> = ({ onNext, onBack,
       
       onNext({ documentPath: filePath });
     } catch (err: any) {
-      console.error('Vault upload error:', err);
+      console.error('Upload error:', err);
       setStatus('error');
-      setErrorMessage(err.message || 'Protocol synchronization failure.');
+      setErrorMessage(err.message || 'Upload failed. Please try again.');
       setIsUploading(false);
     }
   };
@@ -100,14 +99,14 @@ export const Step3Verification: React.FC<VerificationProps> = ({ onNext, onBack,
     <ApplicationLayout 
       currentStep={3} 
       totalSteps={4} 
-      title="Trust Anchor Protocol" 
+      title="Identity Verification" 
       onBack={onBack}
     >
       <div className="w-full space-y-8 pb-20">
         <div className="text-center space-y-3 px-2">
-          <h2 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900">Final Verification Gate</h2>
+          <h2 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900">Verify your identity</h2>
           <p className="text-slate-500 font-inter text-sm max-w-md mx-auto">
-            Secure your identity in the Veridex vault. This is our primary trust anchor.
+            Upload proof of your student status for our review team. This helps us ensure the integrity of the platform.
           </p>
         </div>
 
@@ -140,7 +139,7 @@ export const Step3Verification: React.FC<VerificationProps> = ({ onNext, onBack,
                       </div>
                       <div className="text-center">
                         <p className="text-sm font-urbanist font-bold text-slate-900 truncate max-w-[200px]">{file.name}</p>
-                        <p className="text-[10px] text-indigo-600 uppercase font-mono tracking-widest mt-1">ASSET_LOADED: READY_FOR_ENCRYPTION</p>
+                        <p className="text-[10px] text-indigo-600 uppercase font-mono tracking-widest mt-1">DOCUMENT READY FOR UPLOAD</p>
                       </div>
                     </div>
                   ) : (
@@ -168,7 +167,7 @@ export const Step3Verification: React.FC<VerificationProps> = ({ onNext, onBack,
                   disabled={!file || isUploading}
                   className={`w-full h-14 rounded-xl shadow-xl font-urbanist font-bold transition-all text-sm sm:text-base ${file && !isUploading ? 'bg-slate-900 hover:bg-black text-white' : 'bg-slate-100 text-slate-300'}`}
                 >
-                  Secure Document in Vault
+                  Verify Identity
                   <ShieldCheck className="ml-2 w-4 h-4" />
                 </Button>
               </motion.div>
@@ -177,6 +176,7 @@ export const Step3Verification: React.FC<VerificationProps> = ({ onNext, onBack,
                 key="processing"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
                 className="bg-slate-900 rounded-2xl p-8 sm:p-12 text-white shadow-2xl overflow-hidden relative"
               >
                 <div className="absolute inset-0 opacity-5 pointer-events-none">
@@ -201,16 +201,16 @@ export const Step3Verification: React.FC<VerificationProps> = ({ onNext, onBack,
                     <div className="flex items-center justify-center gap-2">
                       <Terminal className="w-3 h-3 text-indigo-400" />
                       <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-indigo-400 uppercase">
-                        {status === 'encrypting' && 'EXECUTING: RSA_ENCRYPTION_PROTOCOL'}
-                        {status === 'uploading' && 'EXECUTING: VAULT_INGESTION'}
-                        {status === 'secured' && 'SUCCESS: IDENTITY_SECURED'}
+                        {status === 'encrypting' && 'ENCRYPTING DATA'}
+                        {status === 'uploading' && 'UPLOADING TO SECURE STORAGE'}
+                        {status === 'secured' && 'SUCCESS: UPLOAD COMPLETE'}
                       </span>
                     </div>
                     
                     <h3 className="text-xl font-urbanist font-bold">
-                      {status === 'encrypting' && 'Protecting Identity...'}
-                      {status === 'uploading' && 'Securing in Vault...'}
-                      {status === 'secured' && 'Vault Access Granted'}
+                      {status === 'encrypting' && 'Securing your data...'}
+                      {status === 'uploading' && 'Uploading...'}
+                      {status === 'secured' && 'Upload Successful'}
                     </h3>
 
                     <div className="w-48 h-1 bg-white/10 rounded-full mx-auto overflow-hidden">
@@ -225,11 +225,11 @@ export const Step3Verification: React.FC<VerificationProps> = ({ onNext, onBack,
 
                   <div className="grid grid-cols-1 gap-2 w-full max-w-[200px]">
                     <div className="flex justify-between text-[8px] font-mono text-slate-500 uppercase">
-                      <span>Protocol</span>
-                      <span>V-DX 1.0.4</span>
+                      <span>Service</span>
+                      <span>Veridex Secure</span>
                     </div>
                     <div className="flex justify-between text-[8px] font-mono text-slate-500 uppercase">
-                      <span>Node</span>
+                      <span>Server</span>
                       <span>{projectId.toUpperCase()}</span>
                     </div>
                   </div>
@@ -242,7 +242,7 @@ export const Step3Verification: React.FC<VerificationProps> = ({ onNext, onBack,
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-start gap-3">
           <Lock className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
           <p className="text-[11px] text-slate-500 font-inter leading-relaxed">
-            All documents are stored in a private, encrypted bucket. Only authorized auditors can view your Trust Anchor for manual verification.
+            All documents are stored in a private, encrypted storage bucket. Only authorized administrators can view your identity proof for manual verification.
           </p>
         </div>
       </div>

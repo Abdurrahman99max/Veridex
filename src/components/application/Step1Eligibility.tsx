@@ -83,16 +83,11 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
     }
   };
 
-  const isEmailProvided = formData.email.trim().includes('@') && formData.email.trim().length > 5;
+  const isEmailProvided = formData.email.trim().includes('@') && formData.email.trim().includes('.') && formData.email.trim().length > 5;
   
   const isSkillValid = formData.skillCategory === 'other' 
     ? formData.customSkill.trim().length >= 2 
     : formData.skillCategory !== '';
-
-  const isContactValid = (val: string) => {
-    const isEmail = val.includes('@') && val.includes('.') && val.length > 5;
-    return isEmail;
-  };
 
   const isCoreValid = formData.fullName.trim() !== '' && 
                      formData.university.trim() !== '' && 
@@ -101,7 +96,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
 
   const isPrepValid = formData.fullName.trim() !== '' && 
                      formData.university.trim() !== '' && 
-                     isContactValid(formData.email) &&
+                     isEmailProvided &&
                      formData.gradYear !== '' &&
                      formData.motivation !== '';
 
@@ -114,7 +109,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
         skillCategory: finalSkill,
         gradYear: '2026',
         track: 'core',
-        verificationMethod: isEmailProvided ? 'email' : 'document'
+        verificationMethod: 'email'
       });
     } else if (selectedPath === 'prep') {
       onNext({ 
@@ -151,7 +146,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
   return (
     <ApplicationLayout 
       currentStep={1} 
-      totalSteps={4} 
+      totalSteps={selectedPath === 'prep' ? 3 : 4} 
       title={selectedPath === 'prep' ? "Context & Intent" : "Eligibility Protocol"} 
       onBack={handleInternalBack}
     >
@@ -205,10 +200,10 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                   >
                     <div className="flex justify-between items-start mb-4">
                       <span className="text-[10px] font-mono font-bold tracking-widest text-amber-600 uppercase bg-amber-50 px-2 py-1 rounded">
-                        PREP TRACK
+                        BRIDGE TRACK
                       </span>
                     </div>
-                    <h3 className="text-lg sm:text-xl font-urbanist font-bold text-slate-900">Join Preparation Track</h3>
+                    <h3 className="text-lg sm:text-xl font-urbanist font-bold text-slate-900">Join Bridge Track</h3>
                     <p className="text-xs sm:text-sm text-slate-500 font-inter mt-1">Penultimate year or building skills</p>
                     <div className="mt-6 flex items-center text-xs font-medium text-slate-400 group-hover:text-slate-900 transition-colors">
                       Learn & Grow <ArrowRight className="ml-1 w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
@@ -287,9 +282,9 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                             </div>
                             <div>
                               <span className="text-[10px] font-mono font-bold tracking-widest text-indigo-600 uppercase">
-                                STATUS: PROTOCOL_ACTIVE
+                                STATUS: REVIEW_ACTIVE
                               </span>
-                              <h3 className="text-sm font-urbanist font-bold text-slate-900 mt-1">Verification Data Required</h3>
+                              <h3 className="text-sm font-urbanist font-bold text-slate-900 mt-1">Application Details</h3>
                               <p className="text-slate-500 text-[11px] sm:text-xs font-inter mt-1 leading-relaxed">
                                 Please provide accurate details. Your graduation year is locked to 2026 for this track.
                               </p>
@@ -338,8 +333,8 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
 
                           <div className="space-y-6 pt-6 border-t border-slate-100">
                             <div className="space-y-1">
-                              <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">PERSONAL IDENTIFICATION</Label>
-                              <p className="text-[11px] sm:text-xs text-slate-400 font-inter">Provide your primary personal email for identity sync.</p>
+                              <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">CONTACT EMAIL</Label>
+                              <p className="text-[11px] sm:text-xs text-slate-400 font-inter">We'll send application updates to this address.</p>
                             </div>
                             
                             <div className="grid grid-cols-1 gap-4">
@@ -363,7 +358,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                             disabled={!isCoreValid}
                             className={`w-full h-14 rounded-xl shadow-xl transition-all group cursor-pointer text-sm sm:text-base ${isCoreValid ? 'bg-slate-900 hover:bg-black text-white shadow-slate-200' : 'bg-slate-100 text-slate-300 shadow-none'}`}
                           >
-                            Verify Status & Continue
+                            Continue
                             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                           </Button>
                         </div>
@@ -380,9 +375,9 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                           <Info className="w-5 h-5 text-indigo-500" />
                         </div>
                         <div>
-                          <h4 className="text-sm font-urbanist font-bold text-slate-900">Preparation Track Application</h4>
+                          <h4 className="text-sm font-urbanist font-bold text-slate-900">Bridge Track Application</h4>
                           <p className="text-slate-500 text-[11px] sm:text-xs font-inter mt-1 leading-relaxed">
-                            This track is for students who want to become task-ready before applying to Veridex. <br className="hidden sm:block" />
+                            This track is for students who want to become task-ready before applying to Veridex Core. <br className="hidden sm:block" />
                             <span className="font-bold">This is not the Veridex Core application.</span>
                           </p>
                         </div>
@@ -411,14 +406,15 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-urbanist font-bold text-slate-900">Contact Information</Label>
+                        <Label className="text-sm font-urbanist font-bold text-slate-900">Email Address</Label>
                         <Input 
+                          type="email"
                           value={formData.email}
                           onChange={(e) => setFormData({...formData, email: e.target.value})}
-                          placeholder="Email or WhatsApp (e.g. +1...)"
+                          placeholder="e.g. name@university.edu"
                           className="h-14 border-slate-200 focus:border-slate-900 transition-all font-inter bg-white"
                         />
-                        <p className="text-[10px] text-slate-400 font-inter">Please include your country code for WhatsApp (e.g., +234, +44, +1).</p>
+                        <p className="text-[10px] text-slate-400 font-inter">We'll use this to send you automated program updates and resources.</p>
                       </div>
 
                       <div className="space-y-2">

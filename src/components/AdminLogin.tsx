@@ -37,7 +37,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
       const data = await response.json();
       if (data.success) {
         setStep('otp');
-        toast.success('Protocol authorization code sent');
+        toast.success('Access code sent via email');
       } else {
         toast.error(data.error || 'Failed to request code');
       }
@@ -89,10 +89,10 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
       
       const data = await response.json();
       if (data.success) {
-        toast.success('Access Granted. Opening Ghost Hub.');
+        toast.success('Access Granted. Opening Admin Hub.');
         onSuccess(data.token, normalizedEmail);
       } else {
-        toast.error(data.error || 'Invalid Protocol Code');
+        toast.error(data.error || 'Invalid Code');
         setOtp(['', '', '', '', '', '']);
         otpRefs[0].current?.focus();
       }
@@ -135,7 +135,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
             </h1>
             <p className="text-slate-500 text-[10px] tracking-[0.3em] uppercase flex items-center justify-center gap-2">
               <span className="w-8 h-px bg-slate-800" />
-              Internal Audit Protocol
+              Administrator Portal
               <span className="w-8 h-px bg-slate-800" />
             </p>
           </motion.div>
@@ -169,7 +169,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
                     <input 
                       type="email" 
                       required
-                      placeholder="admin@veridex.com"
+                      placeholder="admin@veridex.io"
                       className="w-full bg-black/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/40 transition-all outline-none text-sm placeholder:text-slate-700"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -185,7 +185,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
-                      INITIALIZE PROTOCOL
+                      REQUEST ACCESS
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
@@ -200,7 +200,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
                 className="space-y-10"
               >
                 <div className="space-y-3 text-center">
-                  <label className="text-[10px] uppercase tracking-[0.3em] text-indigo-400 font-bold">Protocol Verification</label>
+                  <label className="text-[10px] uppercase tracking-[0.3em] text-indigo-400 font-bold">Identity Verification</label>
                   <p className="text-[11px] text-slate-500 font-medium">Delivered to <span className="text-slate-300">{email}</span></p>
                 </div>
 
@@ -227,7 +227,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      'AUTHORIZE SESSION'
+                      'SIGN IN'
                     )}
                   </button>
                   <button 
@@ -235,7 +235,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
                     className="w-full text-[10px] text-slate-600 uppercase tracking-widest hover:text-white transition-colors flex items-center justify-center gap-2"
                   >
                     <ArrowRight className="w-3 h-3 rotate-180" />
-                    Reset Protocol
+                    Go Back
                   </button>
                 </div>
               </motion.div>
@@ -252,10 +252,10 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
         >
           <div className="flex items-center gap-3 text-[9px] text-slate-600 uppercase tracking-[0.4em] font-bold">
             <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
-            Encrypted Node Connection Active
+            Secure Connection Active
           </div>
           <div className="px-4 py-1.5 rounded-full border border-white/5 bg-white/[0.02] text-[8px] text-slate-700 uppercase tracking-widest">
-            Protocol v1.0.4-GHOST-SECURE
+            Veridex Security v1.0.4
           </div>
         </motion.div>
       </div>

@@ -79,10 +79,10 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ track, onReturn })
               />
             </div>
             <div className="space-y-3">
-              <h3 className="text-xl font-urbanist font-bold text-slate-900 uppercase tracking-tight">Initiating Audit Protocol</h3>
+              <h3 className="text-xl font-urbanist font-bold text-slate-900 uppercase tracking-tight">Reviewing Application</h3>
               <div className="flex items-center justify-center gap-2 font-mono text-[10px] text-slate-400">
                 <Terminal className="w-3 h-3" />
-                <span>HASHING_ARTIFACTS... {auditProgress}%</span>
+                <span>PROCESSING_SUBMISSION... {auditProgress}%</span>
               </div>
             </div>
           </motion.div>
@@ -118,22 +118,22 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ track, onReturn })
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 rounded-full border border-indigo-100">
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
                     <span className="text-[9px] sm:text-[10px] font-mono font-bold tracking-widest text-indigo-600 uppercase">
-                      PROTOCOL: CORE_AUDIT_PENDING
+                      STATUS: REVIEW IN PROGRESS
                     </span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-urbanist font-bold text-slate-900 tracking-tight">Application Transmitted</h2>
+                  <h2 className="text-2xl sm:text-3xl font-urbanist font-bold text-slate-900 tracking-tight">Application Received</h2>
                   <p className="text-slate-500 font-inter leading-relaxed max-w-sm mx-auto text-xs sm:text-sm">
-                    Your technical artifacts have been hashed and entered into the manual review queue. We'll notify you once the audit protocol is complete.
+                    Your application details have been submitted and added to our review queue. We'll notify you via email once the review is complete.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-left p-4 sm:p-6 bg-slate-50 rounded-2xl border border-slate-100">
                   <div className="space-y-1 min-w-0">
-                    <p className="text-[9px] font-mono font-bold text-slate-400 uppercase">QUEUE_HASH</p>
+                    <p className="text-[9px] font-mono font-bold text-slate-400 uppercase">APPLICATION ID</p>
                     <p className="text-xs sm:text-sm font-urbanist font-bold text-slate-900 truncate">VX-2026-{Math.random().toString(36).substring(7).toUpperCase()}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[9px] font-mono font-bold text-slate-400 uppercase">EST_AUDIT_TIME</p>
+                    <p className="text-[9px] font-mono font-bold text-slate-400 uppercase">ESTIMATED REVIEW TIME</p>
                     <p className="text-xs sm:text-sm font-urbanist font-bold text-slate-900">48-72 Hours</p>
                   </div>
                 </div>
@@ -142,7 +142,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ track, onReturn })
                   onClick={onReturn}
                   className="w-full h-14 bg-slate-900 text-white rounded-xl font-urbanist font-bold hover:bg-black transition-all cursor-pointer shadow-lg shadow-slate-200 group text-sm sm:text-base"
                 >
-                  Return to Command Center
+                  Return to Home
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>
@@ -160,12 +160,12 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ track, onReturn })
                 <div className="space-y-3 sm:space-y-4">
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 rounded-full border border-amber-100">
                     <span className="text-[9px] sm:text-[10px] font-mono font-bold tracking-widest text-amber-600 uppercase">
-                      STATUS: PREP_TRACK_QUEUED
+                      STATUS: BRIDGE TRACK QUEUED
                     </span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-urbanist font-bold text-slate-900 tracking-tight">Ready for Growth</h2>
                   <p className="text-slate-500 font-inter leading-relaxed max-w-sm mx-auto text-xs sm:text-sm">
-                    You've been successfully registered for the <span className="text-slate-900 font-bold underline decoration-amber-200 decoration-4 underline-offset-4">Preparation Track</span>. We'll reach out when the next cohort begins.
+                    You've been successfully registered for the <span className="text-slate-900 font-bold underline decoration-amber-200 decoration-4 underline-offset-4">Bridge Track</span>. We'll reach out when the next cohort begins.
                   </p>
                 </div>
 

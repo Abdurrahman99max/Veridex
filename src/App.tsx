@@ -67,14 +67,14 @@ export default function App() {
       if (response.ok) {
         setView('success');
       } else {
-        if (result.error === 'IDENTITY_ALREADY_REGISTERED') {
-          toast.error('Identity already registered in secure node.');
+        if (result.error === 'EMAIL_ALREADY_REGISTERED' || result.error === 'IDENTITY_ALREADY_REGISTERED') {
+          toast.error('This email is already registered.');
         } else {
-          toast.error(result.message || 'Transmission failed. Check connection.');
+          toast.error(result.message || 'Submission failed. Please check your connection.');
         }
       }
     } catch (err) {
-      toast.error('Protocol synchronization error.');
+      toast.error('Application submission failed.');
     } finally {
       setIsSubmitting(false);
     }
@@ -188,7 +188,7 @@ export default function App() {
               <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" />
-                  <div className="font-mono text-xs uppercase tracking-widest font-bold">Synchronizing Protocol...</div>
+                  <div className="font-mono text-xs uppercase tracking-widest font-bold">Submitting your application...</div>
                 </div>
               </div>
             )}
