@@ -149,6 +149,7 @@ app.post(`${prefix}/submit-application`, async (c) => {
       id: `LOG-${Date.now()}`,
       action: 'NEW_APPLICATION',
       details: `Signal received from ${email} (${data.track})`,
+      operator: 'SYSTEM_PROTOCOL',
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
 
@@ -234,7 +235,7 @@ app.get(`${prefix}/admin/applicants`, async (c) => {
 app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
   try {
     const id = c.req.param('id');
-    const { status, reliabilityTier, adminFeedback } = await c.req.json();
+    const { status, reliabilityTier, adminFeedback, operator } = await c.req.json();
     
     const applicant = await kv.get(`applicant:${id}`);
     if (!applicant) return c.json({ success: false, error: 'Not found' }, 404);
@@ -340,6 +341,7 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
       id: `LOG-${Date.now()}`,
       action: 'STATUS_UPDATE',
       details: `Protocol ${id} updated. Status: ${status}. Tier: ${reliabilityTier || 'N/A'}. Email: ${emailSent}`,
+      operator: operator || 'UNKNOWN_ADMIN',
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
     
@@ -353,6 +355,7 @@ app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
 app.patch(`${prefix}/admin/applicants/:id/reroute`, async (c) => {
   try {
     const id = c.req.param('id');
+    const { operator } = await c.req.json();
     const applicant = await kv.get(`applicant:${id}`);
     if (!applicant) return c.json({ success: false, error: 'Not found' }, 404);
 
@@ -405,6 +408,7 @@ app.patch(`${prefix}/admin/applicants/:id/reroute`, async (c) => {
       id: `LOG-${Date.now()}`,
       action: 'PROTOCOL_REROUTE',
       details: `Identity ${applicant.email} rerouted from Core to Prep track. Email: ${emailSent}`,
+      operator: operator || 'UNKNOWN_ADMIN',
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
 
@@ -415,9 +419,10 @@ app.patch(`${prefix}/admin/applicants/:id/reroute`, async (c) => {
 });
 
 // 7. Delete Protocol
-app.delete(`${prefix}/admin/applicants/:id`, async (c) => {
+app.post(`${prefix}/admin/applicants/:id/delete`, async (c) => {
   try {
     const id = c.req.param('id');
+    const { operator } = await c.req.json();
     const applicant = await kv.get(`applicant:${id}`);
     if (!applicant) return c.json({ success: false, error: 'Not found' }, 404);
 
@@ -436,6 +441,7 @@ app.delete(`${prefix}/admin/applicants/:id`, async (c) => {
       id: `LOG-${Date.now()}`,
       action: 'PROTOCOL_DELETED',
       details: `Identity ${email} removed.`,
+      operator: operator || 'UNKNOWN_ADMIN',
       timestamp: new Date().toISOString()
     }, ...logs].slice(0, 100));
 

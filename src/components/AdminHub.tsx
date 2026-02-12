@@ -45,6 +45,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { cn } from "./ui/utils";
 
 interface Applicant {
   id: string;
@@ -71,6 +79,7 @@ interface AuditLog {
   id: string;
   action: string;
   details: string;
+  operator?: string;
   timestamp: string;
 }
 
@@ -155,7 +164,8 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
         body: JSON.stringify({ 
           status, 
           reliabilityTier: tier, 
-          adminFeedback: feedback 
+          adminFeedback: feedback,
+          operator: adminEmail
         })
       });
       
@@ -174,8 +184,8 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
 
         if (status === 'archived') {
             setSelectedId(null);
-            fetchAllData();
         }
+        fetchAllData();
       } else {
         throw new Error('Update failed');
       }
@@ -191,7 +201,11 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
     try {
       const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/applicants/${id}/reroute`, {
         method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${publicAnonKey}` }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${publicAnonKey}` 
+        },
+        body: JSON.stringify({ operator: adminEmail })
       });
       const result = await response.json();
       if (response.ok) {
@@ -211,15 +225,20 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
     
     setIsUpdatingStatus(id);
     try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/applicants/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${publicAnonKey}` }
+      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/applicants/${id}/delete`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${publicAnonKey}` 
+        },
+        body: JSON.stringify({ operator: adminEmail })
       });
       if (response.ok) {
         toast.success('Identity hard-reset complete.');
         setApplicants(prev => prev.filter(a => a.id !== id));
         if (selectedId === id) setSelectedId(null);
         setActiveMenuId(null);
+        fetchAllData();
       } else {
         throw new Error('Delete failed');
       }
@@ -505,10 +524,19 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                       <span className="text-[10px] opacity-40">{new Date(log.timestamp).toLocaleString()}</span>
                     </div>
                     <div className={`${headingColor} text-xs font-mono`}>{log.details}</div>
-                    <div className="text-[9px] opacity-30 mt-1 uppercase">Log ID: {log.id}</div>
+                    {log.operator && (
+                        <div className="mt-1 flex items-center gap-1.5">
+                            <span className="text-[9px] font-bold opacity-30 uppercase tracking-wider">BY:</span>
+                            <span className="text-[10px] font-bold text-indigo-500/70">{log.operator}</span>
+                        </div>
+                    )}
+                    <div className="text-[9px] opacity-20 mt-1 uppercase">Log ID: {log.id}</div>
                   </div>
                 </div>
               ))}
+              {auditLogs.length === 0 && (
+                  <div className="py-20 text-center opacity-40">Audit trail is currently clear.</div>
+              )}
             </div>
           ) : (
             <div className="p-6 max-w-4xl mx-auto space-y-8">
@@ -609,7 +637,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                 </div>
 
                 {/* SCROLLABLE BODY */}
-                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar pb-10">
                   {/* Primary Info */}
                   <section className="space-y-4">
                     <div>
@@ -752,8 +780,8 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                     </div>
                   )}
 
-                  {/* Audit Logs for this user */}
-                  <section className="space-y-3">
+                  {/* Metadata Signal */}
+                  <section className="space-y-3 pb-24">
                     <div className="text-[10px] uppercase tracking-widest opacity-40 font-bold">Metadata Signal</div>
                     <div className="bg-white/[0.02] p-4 rounded-xl border border-white/5 flex flex-wrap gap-2">
                       {selectedApplicant.tags?.map((tag, i) => (
@@ -774,22 +802,23 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <label className="text-[10px] uppercase font-bold opacity-40 px-1">Reliability Tier</label>
-                          <select 
-                            value={tempTier} 
-                            onChange={(e) => setTempTier(e.target.value as any)}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:ring-1 focus:ring-indigo-500"
-                          >
-                            <option value="high" className="bg-[#0D0D0F]">Verified – High</option>
-                            <option value="medium" className="bg-[#0D0D0F]">Verified – Medium</option>
-                            <option value="under_review" className="bg-[#0D0D0F]">Under Review</option>
-                          </select>
+                          <label className="text-[10px] uppercase font-bold opacity-40 px-1 tracking-widest">Reliability Tier</label>
+                          <Select value={tempTier} onValueChange={(val) => setTempTier(val as any)}>
+                            <SelectTrigger className="h-10 bg-white/5 border-white/10 text-white font-mono text-xs focus:ring-indigo-500/50 focus:border-indigo-500/50 border hover:border-indigo-500/30 transition-all">
+                                <SelectValue placeholder="Select Tier" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#121214] border-white/10 text-white">
+                                <SelectItem value="high" className="focus:bg-indigo-600 focus:text-white transition-colors cursor-pointer text-xs font-mono">Verified – High</SelectItem>
+                                <SelectItem value="medium" className="focus:bg-indigo-600 focus:text-white transition-colors cursor-pointer text-xs font-mono">Verified – Medium</SelectItem>
+                                <SelectItem value="under_review" className="focus:bg-indigo-600 focus:text-white transition-colors cursor-pointer text-xs font-mono">Under Review</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="flex flex-col justify-end">
                             <button 
                                 onClick={() => handleStatusUpdate(selectedApplicant.id, 'verified', tempTier, tempFeedback)}
                                 disabled={!!isUpdatingStatus}
-                                className="w-full h-[38px] bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs uppercase rounded-lg shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all"
+                                className="w-full h-[40px] bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs uppercase rounded-lg shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                             >
                                 {isUpdatingStatus === selectedApplicant.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                                 Verify Protocol
@@ -798,10 +827,10 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-bold opacity-40 px-1">Audit Feedback (Optional)</label>
+                        <label className="text-[10px] uppercase font-bold opacity-40 px-1 tracking-widest">Audit Feedback (Optional)</label>
                         <textarea 
                           placeholder="Specify why this signal is being flagged or rerouted..."
-                          className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-xs text-white outline-none focus:ring-1 focus:ring-indigo-500 min-h-[60px]"
+                          className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-xs text-white outline-none focus:ring-1 focus:ring-indigo-500 min-h-[60px] font-mono transition-all"
                           value={tempFeedback}
                           onChange={(e) => setTempFeedback(e.target.value)}
                         />
@@ -811,14 +840,14 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                         <button 
                           onClick={() => handleStatusUpdate(selectedApplicant.id, 'flagged', undefined, tempFeedback)}
                           disabled={!!isUpdatingStatus}
-                          className="flex items-center justify-center gap-2 p-3 border border-rose-500/30 text-rose-500 hover:bg-rose-500/10 rounded-lg text-xs font-bold uppercase transition-all"
+                          className="flex items-center justify-center gap-2 p-3 border border-rose-500/30 text-rose-500 hover:bg-rose-500/10 rounded-lg text-xs font-bold uppercase transition-all active:scale-[0.98]"
                         >
                           <ShieldAlert className="w-4 h-4" /> Flag
                         </button>
                         <button 
                           onClick={() => handleReroute(selectedApplicant.id)}
                           disabled={!!isUpdatingStatus || selectedApplicant.track === 'prep'}
-                          className="flex items-center justify-center gap-2 p-3 border border-amber-500/30 text-amber-500 hover:bg-amber-500/10 disabled:opacity-30 rounded-lg text-xs font-bold uppercase transition-all"
+                          className="flex items-center justify-center gap-2 p-3 border border-amber-500/30 text-amber-500 hover:bg-amber-500/10 disabled:opacity-30 rounded-lg text-xs font-bold uppercase transition-all active:scale-[0.98]"
                         >
                           <RefreshCcw className="w-4 h-4" /> Reroute to Prep
                         </button>
@@ -837,7 +866,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                       </div>
                       <button 
                         onClick={() => handleStatusUpdate(selectedApplicant.id, 'pending')}
-                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] font-bold uppercase tracking-tight transition-all"
+                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] font-bold uppercase tracking-tight transition-all active:scale-[0.98]"
                       >
                         Re-open Audit
                       </button>
@@ -863,6 +892,24 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #27272A;
+        }
+        
+        /* Custom UI Select styling for Dark Theme */
+        [data-slot="select-content"] {
+            background-color: #121214 !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+        }
+        [data-slot="select-item"]:focus {
+            background-color: #4F46E5 !important;
+            color: white !important;
+        }
+        [data-slot="select-trigger"] {
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        [data-slot="select-trigger"]:focus {
+            border-color: #4F46E5 !important;
+            box-shadow: 0 0 0 1px #4F46E5 !important;
         }
       `}} />
     </div>
