@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'sonner@2.0.3';
+import { motion, AnimatePresence } from 'motion/react';
 import { LandingPage } from './components/landing/LandingPage';
 import { EntryGate } from './components/application/EntryGate';
 import { Step1Eligibility } from './components/application/Step1Eligibility';
@@ -7,6 +8,7 @@ import { Step2SkillProof } from './components/application/Step2SkillProof';
 import { Step3Verification } from './components/application/Step3Verification';
 import { Step3Commitment } from './components/application/Step3Commitment';
 import { SuccessScreen } from './components/application/SuccessScreen';
+import { StatusCheck } from './components/StatusCheck';
 import { AdminLogin } from './components/AdminLogin';
 import { AdminHub } from './components/AdminHub';
 import { projectId, publicAnonKey } from './utils/supabase/info';
@@ -15,11 +17,23 @@ type View = 'landing' | 'gate' | 'application' | 'admin' | 'success';
 
 export default function App() {
   const [view, setView] = useState<View>('landing');
+  const [showStatusCheck, setShowStatusCheck] = useState(false);
   const [step, setStep] = useState(1);
   const [track, setTrack] = useState<'core' | 'prep' | null>(null);
   const [formData, setFormData] = useState<any>({});
-  const [adminAuth, setAdminAuth] = useState<{ token: string; email: string } | null>(null);
+  const [adminAuth, setAdminAuth] = useState<{ token: string; email: string } | null>(() => {
+    const saved = localStorage.getItem('vdx_admin_session');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (adminAuth) {
+      localStorage.setItem('vdx_admin_session', JSON.stringify(adminAuth));
+    } else {
+      localStorage.removeItem('vdx_admin_session');
+    }
+  }, [adminAuth]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -47,8 +61,6 @@ export default function App() {
   const handleBackToLanding = () => setView('landing');
 
   // Bifurcation Logic: Prep (3 steps), Core (4 steps)
-  // Prep: 1 (Eligibility) -> 2 (Skill) -> 3 (Commitment)
-  // Core: 1 (Eligibility) -> 2 (Skill) -> 3 (Verification) -> 4 (Commitment)
   const getTotalSteps = () => (track === 'prep' ? 3 : 4);
 
   const submitApplication = async (finalData: any) => {
@@ -65,13 +77,14 @@ export default function App() {
       
       const result = await response.json();
       if (response.ok) {
-        setView('success');
-      } else {
-        if (result.error === 'EMAIL_ALREADY_REGISTERED' || result.error === 'IDENTITY_ALREADY_REGISTERED') {
-          toast.error('This email is already registered.');
+        if (result.duplicate) {
+          toast.info("It looks like you've already applied. Please check the Status Portal on the main page for updates.", { duration: 6000 });
+          setView('landing');
         } else {
-          toast.error(result.message || 'Submission failed. Please check your connection.');
+          setView('success');
         }
+      } else {
+        toast.error(result.message || 'Submission failed. Please check your connection.');
       }
     } catch (err) {
       toast.error('Application submission failed.');
@@ -107,7 +120,6 @@ export default function App() {
   };
 
   const renderApplicationStep = () => {
-    // Logic for Step Mapping based on Track
     if (step === 1) {
       return (
         <Step1Eligibility 
@@ -130,7 +142,6 @@ export default function App() {
     }
 
     if (track === 'prep') {
-      // For Prep Track, step 3 is Commitment
       if (step === 3) {
         return (
           <Step3Commitment 
@@ -142,7 +153,6 @@ export default function App() {
         );
       }
     } else {
-      // For Core Track
       if (step === 3) {
         return (
           <Step3Verification
@@ -170,7 +180,20 @@ export default function App() {
   const renderView = () => {
     switch (view) {
       case 'landing':
-        return <LandingPage onApply={handleApply} onWaitlist={handleWaitlist} />;
+        return (
+          <>
+            <LandingPage 
+              onApply={handleApply} 
+              onWaitlist={handleWaitlist} 
+              onCheckStatus={() => setShowStatusCheck(true)} 
+            />
+            <AnimatePresence mode="wait">
+              {showStatusCheck && (
+                <StatusCheck key="status-check-modal" onClose={() => setShowStatusCheck(false)} />
+              )}
+            </AnimatePresence>
+          </>
+        );
       
       case 'gate':
         return (
@@ -210,12 +233,12 @@ export default function App() {
         return <AdminHub token={adminAuth.token} adminEmail={adminAuth.email} />;
 
       default:
-        return <LandingPage onApply={handleApply} onWaitlist={handleWaitlist} />;
+        return <LandingPage onApply={handleApply} onWaitlist={handleWaitlist} onCheckStatus={() => setShowStatusCheck(true)} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-white selection:bg-black selection:text-white">
+    <div className="min-h-screen bg-white selection:bg-black selection:text-white relative">
       <Toaster position="top-center" richColors theme="light" />
       {renderView()}
     </div>

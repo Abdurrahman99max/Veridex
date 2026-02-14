@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Resizable } from 're-resizable';
 import { 
   Shield, 
   Search, 
-  Filter, 
   LayoutGrid, 
   List, 
   CheckCircle2, 
@@ -14,34 +12,28 @@ import {
   ChevronRight,
   ExternalLink,
   Mail,
-  MoreVertical,
   MoreHorizontal,
-  ArrowUpRight,
   User,
   Users,
-  Settings,
-  Keyboard,
-  FileText,
-  Trash2,
-  Undo2,
-  Loader2,
-  Moon,
-  Sun,
   LogOut,
   Activity,
   Zap,
   Download,
   Terminal,
-  Key,
   Menu,
   ShieldCheck,
   ShieldAlert,
   Inbox,
-  UserPlus,
   RefreshCcw,
   Archive,
   Eye,
-  AlertTriangle
+  Trash2,
+  Undo2,
+  AlertTriangle,
+  FileText,
+  Loader2,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
@@ -60,7 +52,9 @@ interface Applicant {
   email: string;
   university: string;
   track: 'core' | 'prep';
-  status: 'pending' | 'verified' | 'flagged' | 'archived';
+  application_state: 'APPLIED' | 'ROUTED_TO_PREP' | 'ACCEPTED' | 'REJECTED' | 'REVOKED' | 'ARCHIVED';
+  account_status: 'ACTIVE' | 'DISABLED';
+  status: 'pending' | 'verified' | 'flagged' | 'archived'; // Legacy
   reliabilityTier?: 'high' | 'medium' | 'under_review';
   adminFeedback?: string;
   rationale: string;
@@ -77,15 +71,28 @@ interface Applicant {
 
 interface AuditLog {
   id: string;
-  action: string;
-  details: string;
-  operator?: string;
+  application_id: string;
+  actor_id: string;
+  previous_state: string;
+  new_state: string;
+  reason_code: string;
+  note: string;
   timestamp: string;
 }
 
 interface AdminHubProps {
   token: string;
   adminEmail: string;
+}
+
+interface PendingAction {
+  id: string;
+  type: 'status_update' | 'reroute' | 'delete' | 'revoke';
+  newState?: string;
+  tier?: string;
+  feedback?: string;
+  label: string;
+  warning: string;
 }
 
 export function AdminHub({ token, adminEmail }: AdminHubProps) {
@@ -101,10 +108,16 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newTeamMember, setNewTeamMember] = useState('');
-  const [isMaximized, setIsMaximized] = useState(false);
   const [tempTier, setTempTier] = useState<'high' | 'medium' | 'under_review'>('medium');
   const [tempFeedback, setTempFeedback] = useState('');
+  const [selectedAuditLogs, setSelectedAuditLogs] = useState<AuditLog[]>([]);
+  const [isFetchingLogs, setIsFetchingLogs] = useState(false);
   
+  // Safety Interlock State
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [interlockConfirmed, setInterlockConfirmed] = useState(false);
+  const [actionJustification, setActionJustification] = useState('');
+
   // Menu state
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -115,8 +128,25 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
     if (selectedId && selectedApplicant) {
       setTempTier(selectedApplicant.reliabilityTier || 'medium');
       setTempFeedback(selectedApplicant.adminFeedback || '');
+      fetchAuditLogs(selectedId);
     }
   }, [selectedId, selectedApplicant]);
+
+  const fetchAuditLogs = async (id: string) => {
+    setIsFetchingLogs(true);
+    try {
+      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/application-audit-log/${id}`, {
+        headers: { 'Authorization': `Bearer ${publicAnonKey}` }
+      });
+      if (response.ok) {
+        setSelectedAuditLogs(await response.json());
+      }
+    } catch (err) {
+      console.error('Audit sync error:', err);
+    } finally {
+      setIsFetchingLogs(false);
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -152,147 +182,84 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const handleStatusUpdate = async (id: string, status: Applicant['status'], tier?: string, feedback?: string) => {
-    setIsUpdatingStatus(id);
+  const executeAction = async () => {
+    if (!pendingAction || !interlockConfirmed) return;
+    if ((pendingAction.type === 'revoke' || pendingAction.type === 'delete') && actionJustification.length < 10) {
+        toast.error("Please provide a more detailed justification.");
+        return;
+    }
+
+    setIsUpdatingStatus(pendingAction.id);
+    const id = pendingAction.id;
+
     try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/applicants/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${publicAnonKey}`
-        },
-        body: JSON.stringify({ 
-          status, 
-          reliabilityTier: tier, 
-          adminFeedback: feedback,
-          operator: adminEmail
-        })
-      });
-      
-      const result = await response.json();
-      if (response.ok) {
-        setApplicants(prev => prev.map(a => a.id === id ? { ...a, status, reliabilityTier: tier as any, adminFeedback: feedback } : a));
-        
-        if (result.emailSent) {
-          toast.success(`Application ${status} and email sent.`);
-        } else if (result.emailError) {
-          toast.warning(`Status updated, but email failed to send.`);
-          console.error('Email error:', result.emailError);
+        let endpoint = `https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/applicants/${id}`;
+        let method = 'PATCH';
+        let body: any = { operator: adminEmail, confirmed: true };
+
+        if (pendingAction.type === 'status_update') {
+            body = { 
+                ...body,
+                status: pendingAction.newState, 
+                reliabilityTier: pendingAction.tier, 
+                adminFeedback: pendingAction.feedback || actionJustification
+            };
+        } else if (pendingAction.type === 'reroute') {
+            endpoint = `${endpoint}/reroute`;
+        } else if (pendingAction.type === 'delete') {
+            endpoint = `${endpoint}/delete`;
+            method = 'POST';
+        } else if (pendingAction.type === 'revoke') {
+            endpoint = `https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/execute-transition`;
+            method = 'POST';
+            body = {
+                applicationId: id,
+                newState: 'REVOKED',
+                reason: actionJustification,
+                operator: adminEmail,
+                confirmed: true
+            };
+        }
+
+        const response = await fetch(endpoint, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${publicAnonKey}`
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (response.ok) {
+            toast.success(`${pendingAction.label} successful.`);
+            setPendingAction(null);
+            setInterlockConfirmed(false);
+            setActionJustification('');
+            if (pendingAction.type === 'delete' || pendingAction.newState === 'archived') {
+                setSelectedId(null);
+            }
+            fetchAllData();
         } else {
-          toast.success(`Update successful: ${status.toUpperCase()}`);
+            const err = await response.json();
+            throw new Error(err.error || 'Operation failed');
         }
-
-        if (status === 'archived') {
-            setSelectedId(null);
-        }
-        fetchAllData();
-      } else {
-        throw new Error('Update failed');
-      }
-    } catch (err) {
-      toast.error('Transmission error');
+    } catch (err: any) {
+        toast.error(err.message || 'Transmission error');
     } finally {
-      setIsUpdatingStatus(null);
+        setIsUpdatingStatus(null);
     }
   };
 
-  const handleReroute = async (id: string) => {
-    setIsUpdatingStatus(id);
-    try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/applicants/${id}/reroute`, {
-        method: 'PATCH',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${publicAnonKey}` 
-        },
-        body: JSON.stringify({ operator: adminEmail })
-      });
-      const result = await response.json();
-      if (response.ok) {
-        if (result.emailSent) toast.success('Moved to Preparation Program: Update email sent.');
-        else toast.warning('Moved track, but email failed.');
-        fetchAllData();
-      }
-    } catch (err) {
-      toast.error('Failed to move track');
-    } finally {
-      setIsUpdatingStatus(null);
-    }
-  };
-
-  const handleDeleteApplication = async (id: string) => {
-    if (!window.confirm('DELETE & RESTART: Are you sure you want to permanently delete this application? This will allow the applicant to try again.')) return;
-    
-    setIsUpdatingStatus(id);
-    try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/applicants/${id}/delete`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${publicAnonKey}` 
-        },
-        body: JSON.stringify({ operator: adminEmail })
-      });
-      if (response.ok) {
-        toast.success('Application deleted successfully.');
-        setApplicants(prev => prev.filter(a => a.id !== id));
-        if (selectedId === id) setSelectedId(null);
-        setActiveMenuId(null);
-        fetchAllData();
-      } else {
-        throw new Error('Delete failed');
-      }
-    } catch (err) {
-      toast.error('Deletion failed');
-    } finally {
-      setIsUpdatingStatus(null);
-    }
-  };
-
-  const handleWhitelistAction = async (email: string, action: 'add' | 'remove') => {
-    try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/whitelist`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${publicAnonKey}`
-        },
-        body: JSON.stringify({ email, action })
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setWhitelist(data.whitelist);
-        setNewTeamMember('');
-        toast.success(`Team member ${action === 'add' ? 'added' : 'removed'}`);
-        fetchAllData();
-      }
-    } catch (err) {
-      toast.error('Whitelist update failed');
-    }
-  };
-
-  const handleViewDocument = async (path: string) => {
-    try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/signed-url`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${publicAnonKey}`
-        },
-        body: JSON.stringify({ path })
-      });
-      const data = await response.json();
-      if (data.url) window.open(data.url, '_blank');
-      else toast.error('Access denied');
-    } catch (err) {
-      toast.error('Connection failed');
-    }
+  const initiateAction = (action: PendingAction) => {
+    setPendingAction(action);
+    setInterlockConfirmed(false);
+    setActionJustification(action.feedback || '');
   };
 
   const handleExportCSV = () => {
     const headers = ['ID', 'Name', 'Email', 'University', 'Track', 'Status', 'Date'];
     const rows = applicants.map(a => [
-      a.id, a.fullName, a.email, a.university, a.track, a.status, new Date(a.submittedAt).toLocaleDateString()
+      a.id, a.fullName, a.email, a.university, a.track, a.application_state || a.status, new Date(a.submittedAt).toLocaleDateString()
     ]);
     const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
     const encodedUri = encodeURI(csvContent);
@@ -312,7 +279,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
       (a.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (a.university || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (a.id || '').toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesTrack && matchesSearch && (activeTab === 'applicants' ? a.status !== 'archived' : true);
+    return matchesTrack && matchesSearch && (activeTab === 'applicants' ? (a.application_state !== 'ARCHIVED' && a.status !== 'archived') : true);
   });
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
@@ -365,7 +332,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
             <div className={`text-xs font-bold ${headingColor} truncate`}>{adminEmail}</div>
             <div className="text-[10px] opacity-50">Administrator</div>
           </div>
-          <button onClick={() => window.location.href = '/?dex=1'} className="p-2 opacity-50 hover:opacity-100"><LogOut className="w-4 h-4" /></button>
+          <button onClick={() => { localStorage.removeItem('vdx_admin_session'); window.location.href = '/?dex=1'; }} className="p-2 opacity-50 hover:opacity-100"><LogOut className="w-4 h-4" /></button>
         </div>
       </div>
     </div>
@@ -440,7 +407,6 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                         <div className="flex flex-col">
                           <span className="font-bold text-[10px] opacity-40 uppercase tracking-tighter mb-0.5">{a.id}</span>
                           <span className={`${headingColor} font-bold truncate max-w-[150px] sm:max-w-none`}>{a.fullName}</span>
-                          <span className="text-[10px] opacity-50 truncate max-w-[150px] sm:max-w-none sm:hidden">{a.email}</span>
                         </div>
                       </td>
                       <td className="py-4 px-6 hidden sm:table-cell cursor-pointer" onClick={() => setSelectedId(a.id)}>
@@ -449,17 +415,13 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                       <td className="py-4 px-4 md:px-6 cursor-pointer" onClick={() => setSelectedId(a.id)}>
                         <div className="flex flex-col items-start gap-1">
                           <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
-                            a.status === 'verified' ? 'bg-emerald-500/10 text-emerald-500' : 
-                            a.status === 'flagged' ? 'bg-rose-500/10 text-rose-500' : 
+                            a.application_state === 'ACCEPTED' ? 'bg-emerald-500/10 text-emerald-500' : 
+                            a.application_state === 'REJECTED' || a.application_state === 'REVOKED' ? 'bg-rose-500/10 text-rose-500' : 
+                            a.application_state === 'ROUTED_TO_PREP' ? 'bg-amber-500/10 text-amber-500' :
                             'bg-slate-500/10 text-slate-400'
                           }`}>
-                            {a.status === 'flagged' ? 'Not Approved' : a.status}
+                            {a.application_state || a.status}
                           </span>
-                          {a.status === 'verified' && a.reliabilityTier && (
-                            <span className="text-[8px] font-bold uppercase tracking-tight opacity-50 px-2 py-0.5 bg-white/5 rounded border border-white/5">
-                              {a.reliabilityTier.replace('_', ' ')}
-                            </span>
-                          )}
                         </div>
                       </td>
                       <td className="py-4 px-6 hidden md:table-cell opacity-40 text-[11px] cursor-pointer" onClick={() => setSelectedId(a.id)}>
@@ -488,14 +450,25 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                               <Eye className="w-4 h-4 text-indigo-500" /> View Application
                             </button>
                             <button 
-                              onClick={() => handleStatusUpdate(a.id, 'archived')}
+                              onClick={() => initiateAction({
+                                id: a.id,
+                                type: 'status_update',
+                                newState: 'archived',
+                                label: 'Archive Application',
+                                warning: 'This will move the application to the archives. It will no longer appear in the active list.'
+                              })}
                               className="w-full flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-white/5 transition-colors text-left"
                             >
                               <Archive className="w-4 h-4 text-amber-500" /> Archive Application
                             </button>
                             <div className="h-px bg-white/5 my-1" />
                             <button 
-                              onClick={() => handleDeleteApplication(a.id)}
+                              onClick={() => initiateAction({
+                                id: a.id,
+                                type: 'delete',
+                                label: 'Delete & Restart',
+                                warning: 'CRITICAL: This will permanently delete the application. The applicant will be allowed to re-apply from scratch.'
+                              })}
                               className="w-full flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-rose-500/10 text-rose-500 transition-colors text-left font-bold"
                             >
                               <Trash2 className="w-4 h-4" /> Delete & Restart
@@ -505,47 +478,36 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                       </td>
                     </tr>
                   ))}
-                  {filteredApplicants.length === 0 && (
-                    <tr><td colSpan={5} className="py-20 text-center opacity-40">No applicants found.</td></tr>
-                  )}
                 </tbody>
               </table>
             </div>
           ) : activeTab === 'logs' ? (
             <div className="p-6 space-y-4">
-              <div className={`${headingColor} font-bold text-lg mb-6`}>Activity History</div>
+              <h2 className={`${headingColor} font-bold text-lg mb-6 uppercase tracking-widest`}>Registry Audit Logs</h2>
               {auditLogs.map((log) => (
                 <div key={log.id} className={`${surfaceColor} border ${borderColor} p-4 rounded-lg flex items-start gap-4 hover:border-indigo-500/50 transition-all`}>
-                  <div className={`p-2 rounded bg-white/5`}>
-                    <Activity className="w-4 h-4 text-indigo-500" />
-                  </div>
+                  <div className={`p-2 rounded bg-white/5`}><Activity className="w-4 h-4 text-indigo-500" /></div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">{log.action}</span>
+                      <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">{log.reason_code}</span>
                       <span className="text-[10px] opacity-40">{new Date(log.timestamp).toLocaleString()}</span>
                     </div>
-                    <div className={`${headingColor} text-xs font-mono`}>{log.details}</div>
-                    {log.operator && (
-                        <div className="mt-1 flex items-center gap-1.5">
-                            <span className="text-[9px] font-bold opacity-30 uppercase tracking-wider">BY:</span>
-                            <span className="text-[10px] font-bold text-indigo-500/70">{log.operator}</span>
-                        </div>
-                    )}
-                    <div className="text-[9px] opacity-20 mt-1 uppercase">ID: {log.id}</div>
+                    <div className={`${headingColor} text-xs font-mono mb-1`}>
+                        <span className="opacity-40">{log.previous_state}</span> → <span className="text-emerald-500">{log.new_state}</span>
+                    </div>
+                    <p className="text-xs opacity-70 mb-2">{log.note}</p>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-bold opacity-30 uppercase">Actor:</span>
+                        <span className="text-[10px] font-bold text-indigo-500/70">{log.actor_id}</span>
+                        <span className="text-[9px] opacity-20 uppercase ml-auto">ID: {log.id}</span>
+                    </div>
                   </div>
                 </div>
               ))}
-              {auditLogs.length === 0 && (
-                  <div className="py-20 text-center opacity-40">No activity recorded yet.</div>
-              )}
             </div>
           ) : (
             <div className="p-6 max-w-4xl mx-auto space-y-8">
-              <div>
-                <h2 className={`text-xl font-bold ${headingColor} mb-2`}>Team Access Management</h2>
-                <p className="text-xs opacity-50">Manage authorized administrators. Only whitelisted users can access the Hub.</p>
-              </div>
-
+              <h2 className={`text-xl font-bold ${headingColor} mb-2 uppercase tracking-tighter`}>Team Access Management</h2>
               <div className={`${surfaceColor} border ${borderColor} rounded-xl overflow-hidden`}>
                 <div className="p-4 border-b border-white/5 flex gap-4">
                   <input 
@@ -553,27 +515,18 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                     className={`flex-1 ${inputBg} border-none rounded-lg px-4 py-2 text-sm focus:ring-1 focus:ring-indigo-500 outline-none`}
                     value={newTeamMember} onChange={(e) => setNewTeamMember(e.target.value)}
                   />
-                  <button 
-                    onClick={() => handleWhitelistAction(newTeamMember, 'add')}
-                    disabled={!newTeamMember}
-                    className="bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase transition-all"
-                  >
-                    Add Member
-                  </button>
+                  <button onClick={() => {}} className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase transition-all">Add Member</button>
                 </div>
                 <div className="divide-y divide-white/5">
                   {whitelist.map((email) => (
-                    <div key={email} className="p-4 flex items-center justify-between hover:bg-white/5 transition-all">
+                    <div key={email} className="p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-500 font-bold text-xs">{email.charAt(0).toUpperCase()}</div>
                         <div>
                           <div className={`text-sm font-bold ${headingColor}`}>{email}</div>
-                          <div className="text-[10px] opacity-40 uppercase tracking-widest">{email === adminEmail ? 'Current User' : 'Authorized Administrator'}</div>
+                          <div className="text-[10px] opacity-40 uppercase tracking-widest">{email === adminEmail ? 'Current User' : 'Administrator'}</div>
                         </div>
                       </div>
-                      {email !== adminEmail && (
-                        <button onClick={() => handleWhitelistAction(email, 'remove')} className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"><Trash2 className="w-4 h-4" /></button>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -582,6 +535,74 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
           )}
         </div>
       </main>
+
+      {/* Safety Interlock Modal */}
+      <AnimatePresence>
+        {pendingAction && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setPendingAction(null)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className={`${surfaceColor} border-2 border-indigo-500/20 w-full max-w-md rounded-3xl p-8 shadow-2xl relative z-10`}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                  <ShieldAlert className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className={`text-lg font-bold ${headingColor} tracking-tight`}>Safety Interlock</h3>
+                  <p className="text-[10px] font-mono text-amber-500/70 uppercase tracking-widest">Awaiting Institutional Confirmation</p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 mb-6">
+                <p className={`text-xs font-bold ${headingColor} mb-2 uppercase tracking-wide`}>{pendingAction.label}</p>
+                <p className="text-xs text-slate-400 leading-relaxed">{pendingAction.warning}</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold opacity-30 uppercase tracking-widest">Mandatory Justification</label>
+                  <textarea 
+                    className={`w-full h-24 ${inputBg} border ${borderColor} rounded-xl p-3 text-xs focus:ring-1 focus:ring-indigo-500 outline-none resize-none`}
+                    placeholder="Enter reason for this action..."
+                    value={actionJustification}
+                    onChange={(e) => setActionJustification(e.target.value)}
+                  />
+                </div>
+
+                <label className={`flex items-start gap-3 p-4 rounded-xl border ${interlockConfirmed ? 'border-indigo-500/50 bg-indigo-500/5' : 'border-white/5'} cursor-pointer transition-all`}>
+                  <input 
+                    type="checkbox" 
+                    className="mt-0.5" 
+                    checked={interlockConfirmed} 
+                    onChange={(e) => setInterlockConfirmed(e.target.checked)} 
+                  />
+                  <span className="text-[11px] leading-relaxed select-none">
+                    I confirm this action follows Veridex governance protocols and understand it will be logged immutably in the registry.
+                  </span>
+                </label>
+
+                <div className="flex gap-3">
+                  <button onClick={() => setPendingAction(null)} className="flex-1 py-3 text-xs font-bold opacity-50 hover:opacity-100 transition-all uppercase">Cancel</button>
+                  <button 
+                    onClick={executeAction}
+                    disabled={!interlockConfirmed || (actionJustification.length < 5 && (pendingAction.type === 'revoke' || pendingAction.type === 'delete')) || isUpdatingStatus !== null}
+                    className="flex-[2] bg-indigo-500 hover:bg-indigo-600 disabled:opacity-30 text-white py-3 rounded-xl font-bold text-xs uppercase transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
+                  >
+                    {isUpdatingStatus ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                    Confirm Action
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Detail View Overlay */}
       <AnimatePresence>
@@ -610,237 +631,138 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                     <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest opacity-40">
                       <span>ID: {selectedApplicant.id}</span>
                       <span className="w-1 h-1 rounded-full bg-slate-500" />
-                      <span>{selectedApplicant.track === 'core' ? 'Core Track' : 'Preparation Program'}</span>
+                      <span>{selectedApplicant.track === 'core' ? 'Core Track' : 'Prep Program'}</span>
+                      <span className="w-1 h-1 rounded-full bg-slate-500" />
+                      <span className={selectedApplicant.account_status === 'DISABLED' ? 'text-rose-500' : 'text-emerald-500'}>
+                        {selectedApplicant.account_status || 'ACTIVE'}
+                      </span>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
+                <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-white/5 rounded-full transition-colors"><X className="w-6 h-6" /></button>
               </div>
 
               {/* Body */}
               <div className="flex-1 overflow-auto flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/5">
-                {/* Info Panel */}
                 <div className="w-full md:w-2/3 p-8 space-y-8">
                   <section className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     <div className="space-y-1">
-                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Email Address</div>
-                      <div className={`text-sm font-bold ${headingColor} flex items-center gap-2`}>
-                        {selectedApplicant.email}
-                        <button className="p-1 hover:bg-white/5 rounded text-indigo-500"><Mail className="w-3.5 h-3.5" /></button>
-                      </div>
+                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Email</div>
+                      <div className={`text-sm font-bold ${headingColor}`}>{selectedApplicant.email}</div>
                     </div>
                     <div className="space-y-1">
                       <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Institution</div>
                       <div className={`text-sm font-bold ${headingColor}`}>{selectedApplicant.university}</div>
                     </div>
-                    <div className="space-y-1">
-                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Category</div>
-                      <div className={`text-sm font-bold ${headingColor}`}>{selectedApplicant.skillCategory}</div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Applied On</div>
-                      <div className={`text-sm font-bold ${headingColor}`}>{new Date(selectedApplicant.submittedAt).toLocaleString()}</div>
+                  </section>
+
+                  <section className="space-y-4">
+                    <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Submission Rationale</div>
+                    <div className={`p-6 rounded-2xl bg-white/5 border border-white/5`}>
+                      <p className={`text-sm leading-relaxed ${textColor}`}>{selectedApplicant.rationale}</p>
+                      {selectedApplicant.proofUrl && (
+                        <div className="mt-4 pt-4 border-t border-white/5">
+                            <a href={selectedApplicant.proofUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[10px] font-bold text-indigo-500 hover:underline">
+                                View Proof of Work <ExternalLink className="w-3 h-3" />
+                            </a>
+                        </div>
+                      )}
                     </div>
                   </section>
 
                   <section className="space-y-4">
-                    <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">
-                      {selectedApplicant.track === 'core' ? 'Technical Review' : 'Program Intent'}
-                    </div>
-                    <div className={`p-6 rounded-2xl bg-white/5 border border-white/5 space-y-4`}>
-                      {selectedApplicant.track === 'core' ? (
-                        <>
-                          <div className="space-y-2">
-                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Project Description</div>
-                            <p className={`text-sm leading-relaxed ${textColor}`}>{selectedApplicant.rationale}</p>
-                          </div>
-                          <div className="h-px bg-white/5" />
-                          <div className="flex items-center justify-between">
-                             <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Skill Evidence</div>
-                             <a href={selectedApplicant.proofUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[10px] font-bold text-indigo-500 hover:underline">
-                               View Link <ExternalLink className="w-3 h-3" />
-                             </a>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                          <div className="space-y-1">
-                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Application Reason</div>
-                            <p className={`text-sm ${textColor}`}>
-                              {selectedApplicant.motivation === 'no_samples' ? "Doesn't have strong work samples yet" :
-                               selectedApplicant.motivation === 'learning_structure' ? "Still learning and needs structure" :
-                               selectedApplicant.motivation === 'employable' ? "Wants to become employable before graduation" :
-                               selectedApplicant.motivation === 'rejected' ? "Has been rejected and wants to improve" :
-                               selectedApplicant.motivation || 'Not provided'}
-                            </p>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Skill Level</div>
-                            <p className={`text-sm ${textColor} capitalize`}>
-                              {selectedApplicant.skillLevel === 'self_taught' ? 'Self-taught' : 
-                               selectedApplicant.skillLevel || 'Not provided'}
-                            </p>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Primary Program Goal</div>
-                            <p className={`text-sm ${textColor}`}>
-                              {selectedApplicant.primaryGoal === 'apply_core' ? 'Apply to Veridex Core' :
-                               selectedApplicant.primaryGoal === 'employable' ? 'Become employable' :
-                               selectedApplicant.primaryGoal === 'portfolio' ? 'Build a real portfolio' :
-                               selectedApplicant.primaryGoal || 'Not provided'}
-                            </p>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Weekly Capacity</div>
-                            <p className={`text-sm ${textColor}`}>{selectedApplicant.weeklyHours || 'Not provided'}</p>
-                          </div>
-                          <div className="sm:col-span-2 space-y-2 pt-2 border-t border-white/5">
-                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-tighter">Learning Channels</div>
-                            <div className="flex flex-wrap gap-2">
-                              {selectedApplicant.learningMethods && selectedApplicant.learningMethods.length > 0 ? (
-                                selectedApplicant.learningMethods.map((m: string) => (
-                                  <span key={m} className="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-[10px] uppercase font-bold opacity-70">
-                                    {m.replace('_', ' ')}
-                                  </span>
-                                ))
-                              ) : (
-                                <span className="text-xs opacity-40 italic">No methods selected</span>
-                              )}
+                    <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Registry Audit Logs</div>
+                    <div className={`p-4 rounded-2xl bg-white/5 border border-white/5`}>
+                        {isFetchingLogs ? <Loader2 className="w-4 h-4 animate-spin mx-auto opacity-20" /> : 
+                         selectedAuditLogs.length > 0 ? (
+                            <div className="space-y-3">
+                                {selectedAuditLogs.map(log => (
+                                    <div key={log.id} className="text-[10px] font-mono border-l-2 border-indigo-500/20 pl-3">
+                                        <div className="flex justify-between opacity-40 mb-1">
+                                            <span>{new Date(log.timestamp).toLocaleString()}</span>
+                                            <span>{log.actor_id}</span>
+                                        </div>
+                                        <div>{log.previous_state} → {log.new_state}</div>
+                                        <div className="opacity-50 italic mt-1">{log.note}</div>
+                                    </div>
+                                ))}
                             </div>
-                          </div>
-                        </div>
-                      )}
+                         ) : <div className="text-center py-4 text-[10px] opacity-20">No audit history found.</div>}
                     </div>
                   </section>
-
-                  {selectedApplicant.documentPath && (
-                    <section className="space-y-4">
-                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Verification Document</div>
-                      <button 
-                        onClick={() => handleViewDocument(selectedApplicant.documentPath!)}
-                        className={`w-full flex items-center justify-between p-4 rounded-xl border border-dashed border-white/10 hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all group`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded bg-indigo-500/10 text-indigo-500">
-                            <FileText className="w-5 h-5" />
-                          </div>
-                          <div className="text-left">
-                            <div className={`text-xs font-bold ${headingColor}`}>Identity Verification Document</div>
-                            <div className="text-[10px] opacity-40">Stored securely in private vault</div>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-4 h-4 opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                      </button>
-                    </section>
-                  )}
                 </div>
 
-                {/* Actions Panel */}
-                <div className={`w-full md:w-1/3 p-8 ${inputBg} space-y-8 flex flex-col`}>
-                  <div className="space-y-6 flex-1">
+                <div className={`w-full md:w-1/3 p-8 ${inputBg} space-y-8`}>
+                  <div className="space-y-6">
                     <div className="space-y-3">
-                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Review Decision</div>
+                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Status Management</div>
                       <div className="grid grid-cols-2 gap-3">
                         <button 
-                          onClick={() => handleStatusUpdate(selectedApplicant.id, 'verified', tempTier, tempFeedback)}
-                          disabled={isUpdatingStatus === selectedApplicant.id}
-                          className={cn(
-                            "flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs uppercase transition-all",
-                            selectedApplicant.status === 'verified' 
-                              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
-                              : "bg-white/5 hover:bg-emerald-500/20 hover:text-emerald-500 border border-white/5"
-                          )}
+                            onClick={() => initiateAction({
+                                id: selectedApplicant.id,
+                                type: 'status_update',
+                                newState: 'verified',
+                                tier: tempTier,
+                                feedback: tempFeedback,
+                                label: 'Approve Application',
+                                warning: 'This will grant the applicant access to the Core Track and send a verification email.'
+                            })}
+                            className="flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500/10 text-emerald-500 font-bold text-[10px] uppercase border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all"
                         >
-                          {isUpdatingStatus === selectedApplicant.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-                          Approve
+                            <ShieldCheck className="w-3.5 h-3.5" /> Approve
                         </button>
                         <button 
-                          onClick={() => handleStatusUpdate(selectedApplicant.id, 'flagged', undefined, tempFeedback)}
-                          disabled={isUpdatingStatus === selectedApplicant.id}
-                          className={cn(
-                            "flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs uppercase transition-all",
-                            selectedApplicant.status === 'flagged' 
-                              ? "bg-rose-500 text-white shadow-lg shadow-rose-500/20" 
-                              : "bg-white/5 hover:bg-rose-500/20 hover:text-rose-500 border border-white/5"
-                          )}
+                            onClick={() => initiateAction({
+                                id: selectedApplicant.id,
+                                type: 'status_update',
+                                newState: 'flagged',
+                                feedback: tempFeedback,
+                                label: 'Decline Application',
+                                warning: 'This will mark the application as Not Approved. The applicant will receive a notification email.'
+                            })}
+                            className="flex items-center justify-center gap-2 py-3 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-[10px] uppercase border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all"
                         >
-                          {isUpdatingStatus === selectedApplicant.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
-                          Not Approved
+                            <ShieldAlert className="w-3.5 h-3.5" /> Decline
                         </button>
                       </div>
                     </div>
 
-                    <AnimatePresence>
-                      {selectedApplicant.status === 'verified' && (
-                        <motion.div 
-                          initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                          className="space-y-3"
-                        >
-                          <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Reliability Tier</div>
-                          <Select 
-                            value={tempTier} 
-                            onValueChange={(val: any) => {
-                              setTempTier(val);
-                              handleStatusUpdate(selectedApplicant.id, 'verified', val, tempFeedback);
-                            }}
-                          >
-                            <SelectTrigger className="w-full h-12 bg-white/5 border-white/10 font-bold text-xs uppercase tracking-widest">
-                              <SelectValue placeholder="Select Tier" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#0D0D0F] border-white/10 text-white">
-                              <SelectItem value="high" className="focus:bg-indigo-500 focus:text-white">High Reliability</SelectItem>
-                              <SelectItem value="medium" className="focus:bg-indigo-500 focus:text-white">Medium Reliability</SelectItem>
-                              <SelectItem value="under_review" className="focus:bg-indigo-500 focus:text-white">Under Review</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
                     <div className="space-y-3">
-                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Review Feedback (Sent to Applicant)</div>
-                      <textarea 
-                        className={`w-full h-32 ${surfaceColor} border ${borderColor} rounded-xl p-4 text-xs focus:ring-1 focus:ring-indigo-500 outline-none resize-none`}
-                        placeholder="Add notes for the applicant..."
-                        value={tempFeedback}
-                        onChange={(e) => setTempFeedback(e.target.value)}
-                      />
+                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Institutional Controls</div>
                       <button 
-                        onClick={() => handleStatusUpdate(selectedApplicant.id, selectedApplicant.status, tempTier, tempFeedback)}
-                        className="w-full py-2 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all"
+                         onClick={() => initiateAction({
+                             id: selectedApplicant.id,
+                             type: 'revoke',
+                             label: 'Revoke Institutional Access',
+                             warning: 'CRITICAL: This is a disciplinary action. The student’s account will be disabled immediately and access to all Veridex services will be terminated.'
+                         })}
+                         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-[10px] uppercase border border-rose-500/30 hover:bg-rose-500 hover:text-white transition-all"
                       >
-                        Save Feedback
+                        <ShieldAlert className="w-3.5 h-3.5" /> Revoke Access
+                      </button>
+                      
+                      <button 
+                        onClick={() => initiateAction({
+                            id: selectedApplicant.id,
+                            type: 'reroute',
+                            label: 'Reroute to Preparation Program',
+                            warning: 'This will transition the student from the Core track into the Preparation track for further skill development.'
+                        })}
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-500/10 text-amber-500 font-bold text-[10px] uppercase border border-amber-500/20 hover:bg-amber-500 hover:text-white transition-all"
+                      >
+                        <Undo2 className="w-3.5 h-3.5" /> Move to Prep
                       </button>
                     </div>
-                  </div>
 
-                  <div className="space-y-4 pt-8 border-t border-white/5">
-                    {selectedApplicant.track === 'core' && (
-                      <button 
-                        onClick={() => handleReroute(selectedApplicant.id)}
-                        className="w-full flex items-center justify-between p-4 rounded-xl bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/10 transition-all text-amber-500 group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Undo2 className="w-4 h-4" />
-                          <span className="text-[10px] font-bold uppercase tracking-widest">Move to Prep Program</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 opacity-40 group-hover:translate-x-1" />
-                      </button>
-                    )}
-                    <button 
-                      onClick={() => handleDeleteApplication(selectedApplicant.id)}
-                      className="w-full flex items-center justify-between p-4 rounded-xl bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 transition-all text-rose-500 group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Trash2 className="w-4 h-4" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Delete Application</span>
-                      </div>
-                      <ChevronRight className="w-4 h-4 opacity-40 group-hover:translate-x-1" />
-                    </button>
+                    <div className="space-y-3">
+                        <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Review Feedback</div>
+                        <textarea 
+                            className={`w-full h-32 ${surfaceColor} border ${borderColor} rounded-xl p-4 text-xs focus:ring-1 focus:ring-indigo-500 outline-none resize-none`}
+                            placeholder="Institutional notes..."
+                            value={tempFeedback}
+                            onChange={(e) => setTempFeedback(e.target.value)}
+                        />
+                    </div>
                   </div>
                 </div>
               </div>

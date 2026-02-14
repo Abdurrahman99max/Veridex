@@ -16,9 +16,10 @@ const FourPointStar = ({ className }: { className?: string }) => (
 interface HeroProps {
   onApply?: () => void;
   onWaitlist?: () => void;
+  onCheckStatus?: () => void;
 }
 
-export const Hero = ({ onApply, onWaitlist }: HeroProps) => {
+export const Hero = ({ onApply, onWaitlist, onCheckStatus }: HeroProps) => {
   return (
     <div className="min-h-screen bg-[#F8F8F8] flex flex-col text-slate-900 font-sans selection:bg-slate-200 relative overflow-hidden">
       {/* Font Imports via Style Tag for V1 Speed */}
@@ -107,15 +108,25 @@ export const Hero = ({ onApply, onWaitlist }: HeroProps) => {
           Veridex is a vetted platform for final-year university students with task-ready skills to complete paid tasks and earn employer trust before graduation.
         </p>
 
-        {/* Primary CTA */}
-        <button 
-            onClick={onApply}
-            className="group relative overflow-hidden rounded-lg bg-[#2C2E3E] px-6 sm:px-8 py-3 sm:py-3.5 transition-all hover:bg-[#1f202b] active:scale-[0.98] shadow-lg shadow-indigo-500/10 w-full sm:w-auto">
-          <span className="relative z-10 font-inter font-medium text-white flex items-center justify-center gap-2">
-            Apply for Access
-            <ArrowRight className="w-4 h-4 opacity-70 group-hover:translate-x-0.5 transition-transform" />
-          </span>
-        </button>
+        {/* Primary CTAs */}
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+          <button 
+              onClick={onApply}
+              className="group relative overflow-hidden rounded-lg bg-[#2C2E3E] px-6 sm:px-8 py-3 sm:py-3.5 transition-all hover:bg-[#1f202b] active:scale-[0.98] shadow-lg shadow-indigo-500/10 w-full sm:w-auto">
+            <span className="relative z-10 font-inter font-medium text-white flex items-center justify-center gap-2">
+              Apply for Access
+              <ArrowRight className="w-4 h-4 opacity-70 group-hover:translate-x-0.5 transition-transform" />
+            </span>
+          </button>
+          
+          <button 
+              onClick={onCheckStatus}
+              className="group relative overflow-hidden rounded-lg bg-white border border-slate-200 px-6 sm:px-8 py-3 sm:py-3.5 transition-all hover:bg-slate-50 active:scale-[0.98] w-full sm:w-auto">
+            <span className="relative z-10 font-inter font-medium text-slate-600 flex items-center justify-center gap-2">
+              Check Status
+            </span>
+          </button>
+        </div>
 
         {/* Secondary Muted Text */}
         <div className="mt-8 flex flex-col items-center gap-1.5">
