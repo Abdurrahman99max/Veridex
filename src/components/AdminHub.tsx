@@ -433,6 +433,11 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                           }`}>
                             {a.application_state || a.status}
                           </span>
+                          {a.application_state === 'ACCEPTED' && a.track === 'core' && a.reliabilityTier && (
+                            <span className="text-[8px] font-bold uppercase tracking-tight opacity-50 px-2 py-0.5 bg-white/5 rounded border border-white/5 truncate max-w-[100px]">
+                              {a.reliabilityTier.replace('_', ' ')}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-4 px-6 hidden md:table-cell opacity-40 text-[11px] cursor-pointer" onClick={() => setSelectedId(a.id)}>
@@ -603,7 +608,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                   <button 
                     onClick={executeAction}
                     disabled={!interlockConfirmed || (actionJustification.length < 5 && (pendingAction.type === 'revoke' || pendingAction.type === 'delete')) || isUpdatingStatus !== null}
-                    className="flex-[2] bg-indigo-500 hover:bg-indigo-600 disabled:opacity-30 text-white py-3 rounded-xl font-bold text-xs uppercase transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
+                    className="flex-[2] bg-indigo-500 hover:bg-indigo-600 disabled:opacity-60 text-white py-3 rounded-xl font-bold text-xs uppercase transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
                   >
                     {isUpdatingStatus ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
                     Confirm Action
@@ -740,7 +745,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                             className={cn(
                                 "flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase border transition-all",
                                 selectedApplicant.application_state === 'ACCEPTED'
-                                    ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 opacity-50"
+                                    ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 opacity-70"
                                     : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500 hover:text-white"
                             )}
                         >
@@ -760,7 +765,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                             className={cn(
                                 "flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase border transition-all",
                                 selectedApplicant.application_state === 'REJECTED'
-                                    ? "bg-rose-500/10 text-rose-500 border-rose-500/20 opacity-50"
+                                    ? "bg-rose-500/10 text-rose-500 border-rose-500/20 opacity-70"
                                     : "bg-rose-500/10 text-rose-500 border-rose-500/20 hover:bg-rose-500 hover:text-white"
                             )}
                         >
@@ -772,6 +777,38 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                     <div className="space-y-3">
                       <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Governance Controls</div>
                       
+                      {/* Reliability Tier (Only for Accepted Core) */}
+                      {selectedApplicant.track === 'core' && selectedApplicant.application_state === 'ACCEPTED' && (
+                        <div className="space-y-2 mb-4">
+                          <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Reliability Standing</div>
+                          <Select 
+                            value={tempTier} 
+                            onValueChange={(val: any) => {
+                              setTempTier(val);
+                              // Auto-save tier change
+                              initiateAction({
+                                id: selectedApplicant.id,
+                                type: 'status_update',
+                                newState: 'verified',
+                                tier: val,
+                                feedback: tempFeedback,
+                                label: 'Update Reliability Tier',
+                                warning: 'This will update the student standing in the Veridex registry.'
+                              });
+                            }}
+                          >
+                            <SelectTrigger className="w-full h-12 bg-white/5 border-white/10 font-bold text-xs uppercase tracking-widest">
+                              <SelectValue placeholder="Select Tier" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#0D0D0F] border-white/10 text-white min-w-[200px]">
+                              <SelectItem value="high" className="focus:bg-indigo-500 focus:text-white">High Reliability</SelectItem>
+                              <SelectItem value="medium" className="focus:bg-indigo-500 focus:text-white">Medium Reliability</SelectItem>
+                              <SelectItem value="under_review" className="focus:bg-indigo-500 focus:text-white">Under Review</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
                       {/* Contextual Actions based on track and state */}
                       {selectedApplicant.track === 'core' && selectedApplicant.application_state !== 'ACCEPTED' && (
                         <button 
@@ -811,7 +848,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                          disabled={selectedApplicant.application_state === 'REVOKED'}
                          className={cn(
                              "w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase border border-rose-500/30 transition-all",
-                             selectedApplicant.application_state === 'REVOKED' ? "bg-rose-500/10 text-rose-500 opacity-50 cursor-not-allowed" : "bg-rose-500/5 text-rose-500 hover:bg-rose-500 hover:text-white"
+                             selectedApplicant.application_state === 'REVOKED' ? "bg-rose-500/10 text-rose-500 opacity-70 cursor-not-allowed" : "bg-rose-500/5 text-rose-500 hover:bg-rose-500 hover:text-white"
                          )}
                       >
                         <ShieldAlert className="w-3.5 h-3.5" /> Revoke Access

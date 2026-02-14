@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'sonner@2.0.3';
 import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Shield, 
+  Search, 
+  LayoutGrid,
+  Activity,
+  Zap,
+  ShieldCheck,
+  ShieldAlert,
+  ArrowRight
+} from 'lucide-react';
 import { LandingPage } from './components/landing/LandingPage';
 import { EntryGate } from './components/application/EntryGate';
 import { Step1Eligibility } from './components/application/Step1Eligibility';
@@ -13,11 +23,12 @@ import { AdminLogin } from './components/AdminLogin';
 import { AdminHub } from './components/AdminHub';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 
-type View = 'landing' | 'gate' | 'application' | 'admin' | 'success';
+type View = 'landing' | 'gate' | 'application' | 'admin' | 'success' | 'duplicate';
 
 export default function App() {
   const [view, setView] = useState<View>('landing');
   const [showStatusCheck, setShowStatusCheck] = useState(false);
+  const [duplicateEmail, setDuplicateEmail] = useState('');
   const [step, setStep] = useState(1);
   const [track, setTrack] = useState<'core' | 'prep' | null>(null);
   const [formData, setFormData] = useState<any>({});
@@ -78,8 +89,8 @@ export default function App() {
       const result = await response.json();
       if (response.ok) {
         if (result.duplicate) {
-          toast.info("It looks like you've already applied. Please check the Status Portal on the main page for updates.", { duration: 6000 });
-          setView('landing');
+          setDuplicateEmail(finalData.email);
+          setView('duplicate');
         } else {
           setView('success');
         }
@@ -221,6 +232,42 @@ export default function App() {
 
       case 'success':
         return <SuccessScreen track={track || 'core'} onReturn={() => window.location.href = '/'} />;
+
+      case 'duplicate':
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-md w-full bg-white rounded-3xl p-8 shadow-xl border border-slate-100 text-center"
+            >
+              <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-amber-100">
+                <Shield className="w-8 h-8 text-amber-500" />
+              </div>
+              <h2 className="text-2xl font-urbanist font-bold text-slate-900 mb-3">Record Located</h2>
+              <p className="text-slate-600 text-sm leading-relaxed mb-8">
+                It looks like an application for <span className="font-bold text-slate-900">{duplicateEmail}</span> is already in our registry. You don't need to apply twice.
+              </p>
+              <div className="space-y-3">
+                <button 
+                  onClick={() => {
+                    setView('landing');
+                    setShowStatusCheck(true);
+                  }}
+                  className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg shadow-slate-200"
+                >
+                  Check My Status
+                </button>
+                <button 
+                  onClick={() => setView('landing')}
+                  className="w-full py-4 text-slate-500 font-medium hover:text-slate-800 transition-colors"
+                >
+                  Return Home
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        );
 
       case 'admin':
         if (!adminAuth) {
