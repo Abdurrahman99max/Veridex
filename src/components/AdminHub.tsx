@@ -206,6 +206,17 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
             };
         } else if (pendingAction.type === 'reroute') {
             endpoint = `${endpoint}/reroute`;
+        } else if (pendingAction.type === 'promote') {
+            // Promotion logic: Move from Prep to Core
+            endpoint = `https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/admin/execute-transition`;
+            method = 'POST';
+            body = {
+                applicationId: id,
+                newState: 'ACCEPTED',
+                reason: actionJustification || 'Student successfully completed Preparation Program requirements.',
+                operator: 'SYSTEM_PROMOTION', // Trigger track change in backend
+                confirmed: true
+            };
         } else if (pendingAction.type === 'delete') {
             endpoint = `${endpoint}/delete`;
             method = 'POST';
@@ -694,8 +705,24 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
 
                 <div className={`w-full md:w-1/3 p-8 ${inputBg} space-y-8`}>
                   <div className="space-y-6">
+                    {/* Track Indicator Badge */}
+                    <div className={cn(
+                        "p-3 rounded-xl border flex items-center justify-between",
+                        selectedApplicant.track === 'core' ? "bg-indigo-500/5 border-indigo-500/20" : "bg-amber-500/5 border-amber-500/20"
+                    )}>
+                        <div className="flex items-center gap-2">
+                            {selectedApplicant.track === 'core' ? <Zap className="w-4 h-4 text-indigo-500" /> : <Activity className="w-4 h-4 text-amber-500" />}
+                            <span className={cn("text-[10px] font-bold uppercase tracking-widest", selectedApplicant.track === 'core' ? "text-indigo-500" : "text-amber-500")}>
+                                {selectedApplicant.track === 'core' ? 'Core Track' : 'Prep Program'}
+                            </span>
+                        </div>
+                        <span className="text-[8px] font-mono opacity-40 uppercase">Mode: Active</span>
+                    </div>
+
                     <div className="space-y-3">
-                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Status Management</div>
+                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">
+                        {selectedApplicant.track === 'core' ? 'Core Admission Decision' : 'Prep Enrollment Decision'}
+                      </div>
                       <div className="grid grid-cols-2 gap-3">
                         <button 
                             onClick={() => initiateAction({
@@ -704,12 +731,21 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                                 newState: 'verified',
                                 tier: tempTier,
                                 feedback: tempFeedback,
-                                label: 'Approve Application',
-                                warning: 'This will grant the applicant access to the Core Track and send a verification email.'
+                                label: selectedApplicant.track === 'core' ? 'Approve for Core' : 'Enroll in Prep',
+                                warning: selectedApplicant.track === 'core' 
+                                    ? 'This will grant the applicant access to the Core Track and send a verification email.' 
+                                    : 'This will enroll the applicant in the Preparation Program and send onboarding instructions.'
                             })}
-                            className="flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500/10 text-emerald-500 font-bold text-[10px] uppercase border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all"
+                            disabled={selectedApplicant.application_state === 'ACCEPTED'}
+                            className={cn(
+                                "flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase border transition-all",
+                                selectedApplicant.application_state === 'ACCEPTED'
+                                    ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 opacity-50"
+                                    : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500 hover:text-white"
+                            )}
                         >
-                            <ShieldCheck className="w-3.5 h-3.5" /> Approve
+                            <ShieldCheck className="w-3.5 h-3.5" /> 
+                            {selectedApplicant.track === 'core' ? 'Approve' : 'Enroll'}
                         </button>
                         <button 
                             onClick={() => initiateAction({
@@ -720,7 +756,13 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                                 label: 'Decline Application',
                                 warning: 'This will mark the application as Not Approved. The applicant will receive a notification email.'
                             })}
-                            className="flex items-center justify-center gap-2 py-3 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-[10px] uppercase border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all"
+                            disabled={selectedApplicant.application_state === 'REJECTED'}
+                            className={cn(
+                                "flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase border transition-all",
+                                selectedApplicant.application_state === 'REJECTED'
+                                    ? "bg-rose-500/10 text-rose-500 border-rose-500/20 opacity-50"
+                                    : "bg-rose-500/10 text-rose-500 border-rose-500/20 hover:bg-rose-500 hover:text-white"
+                            )}
                         >
                             <ShieldAlert className="w-3.5 h-3.5" /> Decline
                         </button>
@@ -728,7 +770,37 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                     </div>
 
                     <div className="space-y-3">
-                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Institutional Controls</div>
+                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Governance Controls</div>
+                      
+                      {/* Contextual Actions based on track and state */}
+                      {selectedApplicant.track === 'core' && selectedApplicant.application_state !== 'ACCEPTED' && (
+                        <button 
+                            onClick={() => initiateAction({
+                                id: selectedApplicant.id,
+                                type: 'reroute',
+                                label: 'Reroute to Preparation Program',
+                                warning: 'This will transition the student from the Core track into the Preparation track for further skill development.'
+                            })}
+                            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-500/10 text-amber-500 font-bold text-[10px] uppercase border border-amber-500/20 hover:bg-amber-500 hover:text-white transition-all"
+                        >
+                            <Undo2 className="w-3.5 h-3.5" /> Reroute to Prep
+                        </button>
+                      )}
+
+                      {selectedApplicant.track === 'prep' && selectedApplicant.application_state === 'ACCEPTED' && (
+                        <button 
+                            onClick={() => initiateAction({
+                                id: selectedApplicant.id,
+                                type: 'promote',
+                                label: 'Promote to Core Track',
+                                warning: 'CRITICAL: This will graduate the student from the Prep Program and admit them into the Veridex Core Track. This action is tracked in the audit registry.'
+                            })}
+                            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-500/10 text-indigo-500 font-bold text-[10px] uppercase border border-indigo-500/30 hover:bg-indigo-500 hover:text-white transition-all"
+                        >
+                            <Zap className="w-3.5 h-3.5" /> Promote to Core
+                        </button>
+                      )}
+
                       <button 
                          onClick={() => initiateAction({
                              id: selectedApplicant.id,
@@ -736,29 +808,21 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                              label: 'Revoke Institutional Access',
                              warning: 'CRITICAL: This is a disciplinary action. The student’s account will be disabled immediately and access to all Veridex services will be terminated.'
                          })}
-                         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-[10px] uppercase border border-rose-500/30 hover:bg-rose-500 hover:text-white transition-all"
+                         disabled={selectedApplicant.application_state === 'REVOKED'}
+                         className={cn(
+                             "w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase border border-rose-500/30 transition-all",
+                             selectedApplicant.application_state === 'REVOKED' ? "bg-rose-500/10 text-rose-500 opacity-50 cursor-not-allowed" : "bg-rose-500/5 text-rose-500 hover:bg-rose-500 hover:text-white"
+                         )}
                       >
                         <ShieldAlert className="w-3.5 h-3.5" /> Revoke Access
-                      </button>
-                      
-                      <button 
-                        onClick={() => initiateAction({
-                            id: selectedApplicant.id,
-                            type: 'reroute',
-                            label: 'Reroute to Preparation Program',
-                            warning: 'This will transition the student from the Core track into the Preparation track for further skill development.'
-                        })}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-500/10 text-amber-500 font-bold text-[10px] uppercase border border-amber-500/20 hover:bg-amber-500 hover:text-white transition-all"
-                      >
-                        <Undo2 className="w-3.5 h-3.5" /> Move to Prep
                       </button>
                     </div>
 
                     <div className="space-y-3">
-                        <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Review Feedback</div>
+                        <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Review Feedback (Required for Decision)</div>
                         <textarea 
                             className={`w-full h-32 ${surfaceColor} border ${borderColor} rounded-xl p-4 text-xs focus:ring-1 focus:ring-indigo-500 outline-none resize-none`}
-                            placeholder="Institutional notes..."
+                            placeholder={selectedApplicant.track === 'core' ? "Notes on technical proficiency..." : "Notes on program eligibility..."}
                             value={tempFeedback}
                             onChange={(e) => setTempFeedback(e.target.value)}
                         />

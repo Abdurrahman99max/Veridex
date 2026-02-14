@@ -1235,6 +1235,10 @@
     cursor: default;
   }
 
+  .cursor-not-allowed {
+    cursor: not-allowed;
+  }
+
   .cursor-pointer {
     cursor: pointer;
   }
@@ -1724,6 +1728,16 @@
     background-color: var(--color-amber-500);
   }
 
+  .bg-amber-500\/5 {
+    background-color: color-mix(in srgb, oklch(.769 .188 70.08) 5%, transparent);
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-amber-500\/5 {
+      background-color: color-mix(in oklab, var(--color-amber-500) 5%, transparent);
+    }
+  }
+
   .bg-amber-500\/10 {
     background-color: color-mix(in srgb, oklch(.769 .188 70.08) 10%, transparent);
   }
@@ -1935,6 +1949,16 @@
   @supports (color: color-mix(in lab, red, red)) {
     .bg-rose-50\/10 {
       background-color: color-mix(in oklab, var(--color-rose-50) 10%, transparent);
+    }
+  }
+
+  .bg-rose-500\/5 {
+    background-color: color-mix(in srgb, oklch(.645 .246 16.439) 5%, transparent);
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-rose-500\/5 {
+      background-color: color-mix(in oklab, var(--color-rose-500) 5%, transparent);
     }
   }
 
@@ -3225,6 +3249,12 @@
   @media (hover: hover) {
     .hover\:bg-indigo-50:hover {
       background-color: var(--color-indigo-50);
+    }
+  }
+
+  @media (hover: hover) {
+    .hover\:bg-indigo-500:hover {
+      background-color: var(--color-indigo-500);
     }
   }
 

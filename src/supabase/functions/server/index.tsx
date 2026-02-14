@@ -74,6 +74,11 @@ const executeTransitionInternal = async (applicationId: string, newState: Applic
     updatedApplicant.account_status = 'DISABLED';
   }
 
+  // Handle Track Promotion
+  if (newState === 'ACCEPTED' && updatedApplicant.track === 'prep' && operator === 'SYSTEM_PROMOTION') {
+      updatedApplicant.track = 'core';
+  }
+
   await kv.set(`applicant:${applicationId}`, updatedApplicant);
   await logAudit(applicationId, operator || 'ADMIN', currentState, newState, `TRANSITION_${newState}`, reason || 'Internal state update.');
   
