@@ -133,8 +133,30 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
   const [actionJustification, setActionJustification] = useState('');
 
   // Menu state
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  // Session Timeout Logic
+  useEffect(() => {
+    let timeoutId: number;
+    const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes
+
+    const resetTimer = () => {
+      window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        toast.info("Session expired for security. Please log in again.");
+        localStorage.removeItem('vdx_admin_session');
+        window.location.href = '/?dex=1';
+      }, INACTIVITY_LIMIT);
+    };
+
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    activityEvents.forEach(event => document.addEventListener(event, resetTimer));
+    
+    resetTimer();
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      activityEvents.forEach(event => document.removeEventListener(event, resetTimer));
+    };
+  }, []);
 
   const selectedApplicant = applicants.find(a => a.id === selectedId);
 
@@ -680,6 +702,25 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
                             </a>
                         </div>
                       )}
+                    </div>
+                  </section>
+
+                  <section className="space-y-4">
+                    <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Full Registry Data</div>
+                    <div className={`p-4 rounded-2xl bg-white/5 border border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-4`}>
+                        {Object.entries(selectedApplicant).map(([key, value]) => {
+                            // Skip already displayed or sensitive/internal fields
+                            const skipped = ['id', 'fullName', 'email', 'university', 'track', 'application_state', 'account_status', 'reliabilityTier', 'strike_count', 'cooldown_until', 'adminFeedback', 'rationale', 'skillCategory', 'proofUrl', 'gradYear', 'submittedAt', 'tags', 'projectContext', 'motivation', 'commitment', 'documentPath', 'skillLevel', 'learningMethods', 'weeklyHours', 'primaryGoal'];
+                            if (skipped.includes(key)) return null;
+                            if (typeof value === 'object' && value !== null) return null; // Skip complex objects for this view
+
+                            return (
+                                <div key={key} className="space-y-1 p-2 rounded bg-white/5 border border-white/5 overflow-hidden">
+                                    <div className="text-[8px] uppercase opacity-40 truncate">{key.replace(/([A-Z])/g, ' $1')}</div>
+                                    <div className="text-xs font-mono truncate">{String(value)}</div>
+                                </div>
+                            );
+                        })}
                     </div>
                   </section>
 

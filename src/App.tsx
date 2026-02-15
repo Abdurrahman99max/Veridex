@@ -17,6 +17,8 @@ import { Step1Eligibility } from './components/application/Step1Eligibility';
 import { Step2SkillProof } from './components/application/Step2SkillProof';
 import { Step3Verification } from './components/application/Step3Verification';
 import { Step3Commitment } from './components/application/Step3Commitment';
+import { ReviewStep } from './components/application/ReviewStep';
+import { NextStepConfirmation } from './components/application/NextStepConfirmation';
 import { SuccessScreen } from './components/application/SuccessScreen';
 import { StatusCheck } from './components/StatusCheck';
 import { AdminLogin } from './components/AdminLogin';
@@ -26,17 +28,47 @@ import { projectId, publicAnonKey } from './utils/supabase/info';
 type View = 'landing' | 'gate' | 'application' | 'admin' | 'success' | 'duplicate';
 
 export default function App() {
-  const [view, setView] = useState<View>('landing');
+  // 1. State Declarations
+  const [view, setView] = useState<View>(() => {
+    const saved = localStorage.getItem('vdx_app_draft_view');
+    return (saved === 'application') ? 'application' : 'landing';
+  });
   const [showStatusCheck, setShowStatusCheck] = useState(false);
   const [duplicateEmail, setDuplicateEmail] = useState('');
-  const [step, setStep] = useState(1);
-  const [track, setTrack] = useState<'core' | 'prep' | null>(null);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<any>(() => {
+    const saved = localStorage.getItem('vdx_app_draft_data');
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [step, setStep] = useState(() => {
+    const saved = localStorage.getItem('vdx_app_draft_step');
+    return saved ? parseInt(saved, 10) : 1;
+  });
+  const [track, setTrack] = useState<'core' | 'prep' | null>(() => {
+    const saved = localStorage.getItem('vdx_app_draft_track');
+    return saved ? saved as 'core' | 'prep' : null;
+  });
   const [adminAuth, setAdminAuth] = useState<{ token: string; email: string } | null>(() => {
     const saved = localStorage.getItem('vdx_admin_session');
     return saved ? JSON.parse(saved) : null;
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingStepData, setPendingStepData] = useState<any>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  // 2. Persistence Sync
+  useEffect(() => {
+    if (view === 'application') {
+      localStorage.setItem('vdx_app_draft_data', JSON.stringify(formData));
+      localStorage.setItem('vdx_app_draft_step', step.toString());
+      localStorage.setItem('vdx_app_draft_view', 'application');
+      if (track) localStorage.setItem('vdx_app_draft_track', track);
+    } else if (view === 'success') {
+      localStorage.removeItem('vdx_app_draft_data');
+      localStorage.removeItem('vdx_app_draft_step');
+      localStorage.removeItem('vdx_app_draft_view');
+      localStorage.removeItem('vdx_app_draft_track');
+    }
+  }, [formData, step, view, track]);
 
   useEffect(() => {
     if (adminAuth) {
@@ -53,6 +85,7 @@ export default function App() {
     }
   }, []);
 
+  // 3. Handlers
   const handleApply = () => {
     setTrack(null);
     setView('gate');
@@ -71,11 +104,11 @@ export default function App() {
   };
   const handleBackToLanding = () => setView('landing');
 
-  // Bifurcation Logic: Prep (3 steps), Core (4 steps)
-  const getTotalSteps = () => (track === 'prep' ? 3 : 4);
-
   const submitApplication = async (finalData: any) => {
     setIsSubmitting(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
     try {
       const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/submit-application`, {
         method: 'POST',
@@ -83,10 +116,13 @@ export default function App() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${publicAnonKey}`
         },
-        body: JSON.stringify(finalData)
+        body: JSON.stringify(finalData),
+        signal: controller.signal
       });
       
       const result = await response.json();
+      clearTimeout(timeoutId);
+
       if (response.ok) {
         if (result.duplicate) {
           setDuplicateEmail(finalData.email);
@@ -95,17 +131,26 @@ export default function App() {
           setView('success');
         }
       } else {
-        toast.error(result.message || 'Submission failed. Please check your connection.');
+        toast.error(result.message || 'Submission timed out. Please try again.');
       }
-    } catch (err) {
-      toast.error('Application submission failed.');
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        toast.error('The connection timed out. Please check your network or try again.');
+      } else {
+        toast.error('Application submission failed.');
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleNextStep = async (stepData: any) => {
-    const updatedData = { ...formData, ...stepData };
+    setPendingStepData(stepData);
+    setShowConfirmation(true);
+  };
+
+  const confirmNextStep = () => {
+    const updatedData = { ...formData, ...pendingStepData };
     setFormData(updatedData);
 
     if (updatedData.track) {
@@ -113,13 +158,13 @@ export default function App() {
     }
 
     const currentTrack = updatedData.track || track;
-    const totalSteps = currentTrack === 'prep' ? 3 : 4;
+    const totalSteps = currentTrack === 'prep' ? 4 : 5;
 
     if (step < totalSteps) {
       setStep(step + 1);
-    } else {
-      await submitApplication(updatedData);
     }
+    setShowConfirmation(false);
+    setPendingStepData(null);
   };
 
   const handleBackStep = () => {
@@ -130,6 +175,7 @@ export default function App() {
     }
   };
 
+  // 4. Render Helpers
   const renderApplicationStep = () => {
     if (step === 1) {
       return (
@@ -163,6 +209,16 @@ export default function App() {
           />
         );
       }
+      if (step === 4) {
+        return (
+          <ReviewStep 
+            data={formData}
+            onConfirm={() => submitApplication(formData)}
+            onBack={handleBackStep}
+            isSubmitting={isSubmitting}
+          />
+        );
+      }
     } else {
       if (step === 3) {
         return (
@@ -181,6 +237,16 @@ export default function App() {
             onBack={handleBackStep} 
             prevData={formData}
             track="core" 
+          />
+        );
+      }
+      if (step === 5) {
+        return (
+          <ReviewStep 
+            data={formData}
+            onConfirm={() => submitApplication(formData)}
+            onBack={handleBackStep}
+            isSubmitting={isSubmitting}
           />
         );
       }
@@ -280,7 +346,13 @@ export default function App() {
         return <AdminHub token={adminAuth.token} adminEmail={adminAuth.email} />;
 
       default:
-        return <LandingPage onApply={handleApply} onWaitlist={handleWaitlist} onCheckStatus={() => setShowStatusCheck(true)} />;
+        return (
+          <LandingPage 
+            onApply={handleApply} 
+            onWaitlist={handleWaitlist} 
+            onCheckStatus={() => setShowStatusCheck(true)} 
+          />
+        );
     }
   };
 
@@ -288,6 +360,13 @@ export default function App() {
     <div className="min-h-screen bg-white selection:bg-black selection:text-white relative">
       <Toaster position="top-center" richColors theme="light" />
       {renderView()}
+      <NextStepConfirmation 
+        isOpen={showConfirmation}
+        onConfirm={confirmNextStep}
+        onCancel={() => setShowConfirmation(false)}
+        title="Verify your input"
+        description="Please take a moment to review what you just entered before proceeding to the next step."
+      />
     </div>
   );
 }
