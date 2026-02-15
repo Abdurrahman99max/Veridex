@@ -11,7 +11,8 @@ import {
   AlertCircle,
   Terminal,
   UserCheck,
-  ShieldX
+  ShieldX,
+  Heart
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -27,32 +28,32 @@ type Phase = 'intro' | 'input' | 'searching' | 'result';
 const STATE_MAP: Record<string, { label: string; description: string; color: string }> = {
   'APPLIED': { 
     label: 'Application Received', 
-    description: 'Your file has been logged in the Veridex registry and is awaiting manual review by our administration team.',
+    description: 'We have received your application. Our team is currently reviewing your details to ensure you are placed in the right track for your journey.',
     color: 'amber'
   },
   'ROUTED_TO_PREP': { 
-    label: 'Pathway: Preparation Program', 
-    description: "You've been selected for our Preparation Program track. This is designed to help you strengthen your foundation before entering the Core track.",
+    label: 'Preparation Program', 
+    description: "You have been matched with our Preparation Program. This track is focused on helping you build the technical foundation you need to succeed in the Core track later on.",
     color: 'amber'
   },
   'ACCEPTED': { 
-    label: 'Access Granted', 
-    description: 'Congratulations! Your application has been verified. Please keep an eye on your inbox for official onboarding instructions.',
+    label: 'Welcome to Veridex', 
+    description: 'Great news! Your application has been approved. You now have full access to the platform. Please check your email for your next steps.',
     color: 'emerald'
   },
   'REJECTED': { 
-    label: 'Review Concluded', 
-    description: "We've carefully reviewed your submission but aren't able to move forward at this time. We appreciate your interest in the platform.",
+    label: 'Review Finished', 
+    description: "We have carefully reviewed your application, but we aren't able to move forward at this time. We truly appreciate the time you took to share your work with us.",
     color: 'rose'
   },
   'REVOKED': { 
-    label: 'Access Terminated', 
-    description: 'Your standing has been permanently revoked for multiple policy violations or administrative non-compliance.',
+    label: 'Account Closed', 
+    description: 'Your access to Veridex has been ended due to a policy violation. If you believe this is a mistake, please reach out to our support team.',
     color: 'rose'
   },
   'SUSPENDED': { 
-    label: 'Access Suspended', 
-    description: 'Your account is currently under a cooling-off period due to institutional policy violations.',
+    label: 'Temporary Pause', 
+    description: 'Your account is currently on a brief hold. This is a standard cooling-off period to help you realign with our community standards.',
     color: 'rose'
   }
 };
@@ -69,7 +70,7 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
     return () => { isMounted.current = false; };
   }, []);
 
-  const addTerminalLine = async (line: string, delay = 400) => {
+  const addTerminalLine = async (line: string, delay = 500) => {
     if (!isMounted.current) return;
     setTerminalLines(prev => [...prev, line]);
     await new Promise(resolve => setTimeout(resolve, delay));
@@ -82,8 +83,8 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
     setTerminalLines([]);
     setError(null);
 
-    await addTerminalLine("Initializing secure connection...");
-    await addTerminalLine("Accessing Veridex Registry v1.1.0...");
+    await addTerminalLine("Finding your records...");
+    await addTerminalLine("Checking the Veridex network...");
 
     try {
       const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/status-lookup`, {
@@ -95,30 +96,30 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
         body: JSON.stringify({ email: email.toLowerCase().trim() })
       });
 
-      await addTerminalLine(`Querying registry for: ${email.toLowerCase().trim()}...`, 600);
+      await addTerminalLine(`Looking for ${email.toLowerCase().trim()}...`, 600);
       
       const result = await response.json();
 
-      await addTerminalLine("Synchronizing with state machine...", 400);
+      await addTerminalLine("Reviewing your application progress...", 400);
 
       if (result.found) {
-        await addTerminalLine("Record located. Checking enforcement layers...", 500);
+        await addTerminalLine("Record found. Just a moment...", 500);
         if (isMounted.current) {
           setStatusData(result);
           setPhase('result');
         }
       } else {
-        await addTerminalLine("Error: No record associated with this identity.", 800);
+        await addTerminalLine("We couldn't find an application with that email.", 800);
         if (isMounted.current) {
           setPhase('input');
           setError("We couldn't find an application for that email. Please double-check the spelling.");
         }
       }
     } catch (err) {
-      await addTerminalLine("System failure: Connection interrupted.", 1000);
+      await addTerminalLine("Something went wrong. Please try again.", 1000);
       if (isMounted.current) {
         setPhase('input');
-        setError("System busy. Please try again later.");
+        setError("Our system is a bit busy right now. Please try again in a moment.");
       }
     }
   };
@@ -129,8 +130,8 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
     
     return (
       <div className="space-y-6">
-        <div className={`flex items-center gap-4 p-4 rounded-xl border border-${stateInfo.color}-100 bg-${stateInfo.color}-50/50`}>
-          <div className="p-2 bg-white rounded-lg border border-slate-200 shadow-sm">
+        <div className={`flex items-center gap-4 p-5 rounded-2xl border border-${stateInfo.color}-100 bg-${stateInfo.color}-50/30`}>
+          <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-sm">
             {statusData.suspended ? <ShieldAlert className="w-6 h-6 text-rose-500" /> : 
              statusData.account_status === 'REVOKED' ? <ShieldX className="w-6 h-6 text-rose-600" /> :
              statusData.application_state === 'ACCEPTED' ? <CheckCircle2 className="w-6 h-6 text-emerald-500" /> : 
@@ -138,26 +139,29 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
              <Clock className="w-6 h-6 text-amber-500" />}
           </div>
           <div className="flex-1">
-            <p className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">REGISTRY STATUS</p>
-            <h4 className="font-urbanist font-bold text-slate-900">{stateInfo.label}</h4>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-0.5">Application Status</p>
+            <h4 className="font-urbanist font-bold text-slate-900 text-lg leading-tight">{stateInfo.label}</h4>
           </div>
         </div>
 
-        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 border-dashed">
+        <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
           <p className="text-sm text-slate-600 font-inter leading-relaxed">
             {stateInfo.description}
           </p>
           {statusData.suspended && statusData.cooldown_until && (
-            <div className="mt-4 pt-4 border-t border-slate-200 text-rose-600 font-bold text-xs uppercase tracking-tighter">
-              COOLDOWN ACTIVE UNTIL: {new Date(statusData.cooldown_until).toLocaleDateString()} {new Date(statusData.cooldown_until).toLocaleTimeString()}
+            <div className="mt-4 pt-4 border-t border-slate-200 text-rose-600 font-bold text-xs uppercase tracking-tight">
+              Access returns on: {new Date(statusData.cooldown_until).toLocaleDateString()}
             </div>
           )}
         </div>
 
         {statusData.reliabilityTier && statusData.application_state === 'ACCEPTED' && (
-          <div className="flex items-center justify-between p-3 bg-slate-900 rounded-lg text-white">
-            <span className="text-[10px] uppercase font-bold tracking-widest opacity-60">Reliability Tier</span>
-            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
+          <div className="flex items-center justify-between p-4 bg-slate-900 rounded-xl text-white shadow-lg shadow-slate-200">
+            <div className="flex items-center gap-2">
+              <Heart className="w-4 h-4 text-rose-400" />
+              <span className="text-[10px] uppercase font-bold tracking-widest opacity-80">Community Standing</span>
+            </div>
+            <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-lg ${
               statusData.reliabilityTier === 'high' ? 'bg-emerald-500/20 text-emerald-400' :
               statusData.reliabilityTier === 'medium' ? 'bg-amber-500/20 text-amber-400' :
               'bg-slate-500/20 text-slate-400'
@@ -168,8 +172,8 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
         )}
 
         <div className="space-y-3 pt-2">
-          <Button className="w-full bg-slate-900 text-white font-bold h-12 rounded-xl hover:bg-black transition-all" onClick={onClose}>
-            Acknowledge
+          <Button className="w-full bg-slate-900 text-white font-bold h-14 rounded-2xl hover:bg-black transition-all shadow-xl shadow-slate-200" onClick={onClose}>
+            Back to Home
           </Button>
           <button 
             onClick={() => {
@@ -178,7 +182,7 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
             }}
             className="w-full text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors"
           >
-            Check another identity
+            Check another email address
           </button>
         </div>
       </div>
@@ -190,25 +194,25 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md"
     >
       <motion.div 
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
-        className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl relative overflow-hidden"
+        className="bg-white w-full max-w-md rounded-[32px] p-8 shadow-2xl relative overflow-hidden"
       >
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 z-10">
+        <button onClick={onClose} className="absolute top-6 right-6 p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-300 z-10">
           <X className="w-5 h-5" />
         </button>
 
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded bg-slate-900 flex items-center justify-center shadow-lg shadow-slate-200">
-              <Terminal className="w-3.5 h-3.5 text-white" />
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shadow-lg shadow-slate-200">
+              <Search className="w-4 h-4 text-white" />
             </div>
-            <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-slate-400 uppercase">HARDENED_ACCESS</span>
+            <span className="text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase">Status Check</span>
           </div>
-          <h2 className="text-2xl font-urbanist font-bold text-slate-900">Identity Portal</h2>
+          <h2 className="text-3xl font-urbanist font-bold text-slate-900 tracking-tight">How is your application doing?</h2>
         </div>
 
         <AnimatePresence mode="wait">
@@ -218,38 +222,38 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
+              className="space-y-8"
             >
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
                 <div className="flex gap-4">
-                  <div className="shrink-0 w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm">
-                    <UserCheck className="w-5 h-5 text-slate-600" />
+                  <div className="shrink-0 w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
+                    <UserCheck className="w-6 h-6 text-slate-600" />
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-sm text-slate-700 font-medium leading-relaxed">
-                      Registry Standing Check
+                  <div className="space-y-1.5">
+                    <p className="text-sm text-slate-700 font-bold leading-tight">
+                      For registered students
                     </p>
-                    <p className="text-xs text-slate-500 leading-relaxed">
-                      Enter your institutional identifier to verify your current status within the Veridex network.
+                    <p className="text-xs text-slate-500 leading-relaxed font-inter">
+                      If you've already applied to Veridex, you can check your progress here. Otherwise, please start a new application.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <Button 
                   onClick={() => setPhase('input')}
-                  className="w-full h-14 bg-slate-900 text-white rounded-xl font-urbanist font-bold hover:bg-black transition-all shadow-xl shadow-slate-200 group"
+                  className="w-full h-16 bg-slate-900 text-white rounded-2xl font-urbanist font-bold hover:bg-black transition-all shadow-2xl shadow-slate-300 group text-base"
                 >
-                  Lookup Application
-                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  I've applied already
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={onClose}
-                  className="w-full h-14 border-slate-200 text-slate-600 rounded-xl font-urbanist font-bold hover:bg-slate-50 transition-all"
+                  className="w-full h-16 border-slate-200 text-slate-600 rounded-2xl font-urbanist font-bold hover:bg-slate-50 transition-all text-base"
                 >
-                  Return
+                  Return to Main Page
                 </Button>
               </div>
             </motion.div>
@@ -261,41 +265,41 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
+              className="space-y-8"
             >
-              <div className="space-y-2">
-                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">IDENTIFIER (EMAIL)</label>
+              <div className="space-y-3">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Your Email Address</label>
                 <Input 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@university.edu"
-                  className="h-14 border-slate-200 focus:border-slate-900 transition-all font-inter bg-white"
+                  placeholder="name@email.com"
+                  className="h-16 border-slate-200 rounded-2xl focus:border-slate-900 transition-all font-inter bg-white text-lg px-6"
                   autoFocus
                 />
               </div>
               
               {error && (
-                <div className="flex items-start gap-2 text-rose-500 text-xs bg-rose-50 p-3 rounded-lg border border-rose-100">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="flex items-start gap-3 text-rose-500 text-sm bg-rose-50 p-4 rounded-2xl border border-rose-100">
+                  <AlertCircle className="w-5 h-5 shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 <Button 
                   variant="outline"
                   onClick={() => setPhase('intro')}
-                  className="h-14 px-4 border-slate-200 text-slate-600 rounded-xl"
+                  className="h-16 px-6 border-slate-200 text-slate-600 rounded-2xl font-bold"
                 >
                   Back
                 </Button>
                 <Button 
                   onClick={handleCheck}
                   disabled={!email.includes('@')}
-                  className="flex-1 h-14 bg-slate-900 text-white rounded-xl font-urbanist font-bold hover:bg-black transition-all shadow-xl shadow-slate-200 group"
+                  className="flex-1 h-16 bg-slate-900 text-white rounded-2xl font-urbanist font-bold hover:bg-black transition-all shadow-2xl shadow-slate-300 group text-lg"
                 >
-                  Query Registry
-                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  Find my Application
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>
             </motion.div>
@@ -307,25 +311,18 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="space-y-6"
+              className="space-y-8 py-10"
             >
-              <div className="bg-slate-900 rounded-2xl p-6 font-mono text-[11px] min-h-[160px] shadow-inner border border-slate-800">
-                <div className="space-y-2">
-                  {terminalLines.map((line, i) => (
-                    <div key={i} className="flex gap-2">
-                      <span className="text-emerald-500 font-bold shrink-0">›</span>
-                      <span className="text-slate-300">{line}</span>
-                    </div>
-                  ))}
-                  <div className="flex gap-2 items-center">
-                    <span className="text-emerald-500 font-bold">›</span>
-                    <span className="w-2 h-4 bg-emerald-500/50 animate-pulse" />
-                  </div>
+              <div className="flex flex-col items-center gap-6">
+                <div className="relative">
+                  <div className="w-16 h-16 border-4 border-slate-100 rounded-full" />
+                  <div className="absolute inset-0 w-16 h-16 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                </div>
+                <div className="space-y-2 text-center">
+                  <p className="text-xl font-urbanist font-bold text-slate-900">{terminalLines[terminalLines.length - 1]}</p>
+                  <p className="text-sm text-slate-400 font-inter">Checking our student records in real-time...</p>
                 </div>
               </div>
-              <p className="text-center text-xs text-slate-400 font-inter italic">
-                Scanning audit logs and state machine...
-              </p>
             </motion.div>
           )}
 
