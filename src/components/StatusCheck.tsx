@@ -10,7 +10,8 @@ import {
   Clock, 
   AlertCircle,
   Terminal,
-  UserCheck
+  UserCheck,
+  ShieldX
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -45,8 +46,13 @@ const STATE_MAP: Record<string, { label: string; description: string; color: str
     color: 'rose'
   },
   'REVOKED': { 
+    label: 'Access Terminated', 
+    description: 'Your standing has been permanently revoked for multiple policy violations or administrative non-compliance.',
+    color: 'rose'
+  },
+  'SUSPENDED': { 
     label: 'Access Suspended', 
-    description: 'Your standing has been revoked for administrative reasons. Detailed instructions regarding appeals have been sent to your email.',
+    description: 'Your account is currently under a cooling-off period due to institutional policy violations.',
     color: 'rose'
   }
 };
@@ -76,13 +82,11 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
     setTerminalLines([]);
     setError(null);
 
-    // Initial sequence
     await addTerminalLine("Initializing secure connection...");
-    await addTerminalLine("Accessing Veridex Registry v1.0.4...");
+    await addTerminalLine("Accessing Veridex Registry v1.1.0...");
 
     try {
-      // Start fetch immediately
-      const fetchPromise = fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/status-lookup`, {
+      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-45707f2b/status-lookup`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -93,13 +97,12 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
 
       await addTerminalLine(`Querying registry for: ${email.toLowerCase().trim()}...`, 600);
       
-      const response = await fetchPromise;
       const result = await response.json();
 
       await addTerminalLine("Synchronizing with state machine...", 400);
 
       if (result.found) {
-        await addTerminalLine("Record located. Finalizing decryption...", 500);
+        await addTerminalLine("Record located. Checking enforcement layers...", 500);
         if (isMounted.current) {
           setStatusData(result);
           setPhase('result');
@@ -108,33 +111,34 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
         await addTerminalLine("Error: No record associated with this identity.", 800);
         if (isMounted.current) {
           setPhase('input');
-          setError("We couldn't find an application for that email. Please double-check the spelling or start a new application.");
+          setError("We couldn't find an application for that email. Please double-check the spelling.");
         }
       }
     } catch (err) {
       await addTerminalLine("System failure: Connection interrupted.", 1000);
       if (isMounted.current) {
         setPhase('input');
-        setError("We're having trouble reaching the server. Please try again in a few moments.");
+        setError("System busy. Please try again later.");
       }
     }
   };
 
   const getStatusDisplay = () => {
-    const stateInfo = STATE_MAP[statusData.application_state] || STATE_MAP['APPLIED'];
-    const isRevoked = statusData.account_status === 'DISABLED' || statusData.application_state === 'REVOKED';
-
+    const currentState = statusData.suspended ? 'SUSPENDED' : (statusData.account_status === 'REVOKED' ? 'REVOKED' : statusData.application_state);
+    const stateInfo = STATE_MAP[currentState] || STATE_MAP['APPLIED'];
+    
     return (
       <div className="space-y-6">
         <div className={`flex items-center gap-4 p-4 rounded-xl border border-${stateInfo.color}-100 bg-${stateInfo.color}-50/50`}>
           <div className="p-2 bg-white rounded-lg border border-slate-200 shadow-sm">
-            {isRevoked ? <ShieldAlert className="w-6 h-6 text-rose-500" /> : 
+            {statusData.suspended ? <ShieldAlert className="w-6 h-6 text-rose-500" /> : 
+             statusData.account_status === 'REVOKED' ? <ShieldX className="w-6 h-6 text-rose-600" /> :
              statusData.application_state === 'ACCEPTED' ? <CheckCircle2 className="w-6 h-6 text-emerald-500" /> : 
              statusData.application_state === 'REJECTED' ? <AlertCircle className="w-6 h-6 text-rose-500" /> : 
              <Clock className="w-6 h-6 text-amber-500" />}
           </div>
           <div className="flex-1">
-            <p className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">CURRENT STANDING</p>
+            <p className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">REGISTRY STATUS</p>
             <h4 className="font-urbanist font-bold text-slate-900">{stateInfo.label}</h4>
           </div>
         </div>
@@ -143,11 +147,29 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
           <p className="text-sm text-slate-600 font-inter leading-relaxed">
             {stateInfo.description}
           </p>
+          {statusData.suspended && statusData.cooldown_until && (
+            <div className="mt-4 pt-4 border-t border-slate-200 text-rose-600 font-bold text-xs uppercase tracking-tighter">
+              COOLDOWN ACTIVE UNTIL: {new Date(statusData.cooldown_until).toLocaleDateString()} {new Date(statusData.cooldown_until).toLocaleTimeString()}
+            </div>
+          )}
         </div>
+
+        {statusData.reliabilityTier && statusData.application_state === 'ACCEPTED' && (
+          <div className="flex items-center justify-between p-3 bg-slate-900 rounded-lg text-white">
+            <span className="text-[10px] uppercase font-bold tracking-widest opacity-60">Reliability Tier</span>
+            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
+              statusData.reliabilityTier === 'high' ? 'bg-emerald-500/20 text-emerald-400' :
+              statusData.reliabilityTier === 'medium' ? 'bg-amber-500/20 text-amber-400' :
+              'bg-slate-500/20 text-slate-400'
+            }`}>
+              {statusData.reliabilityTier.replace('_', ' ')}
+            </span>
+          </div>
+        )}
 
         <div className="space-y-3 pt-2">
           <Button className="w-full bg-slate-900 text-white font-bold h-12 rounded-xl hover:bg-black transition-all" onClick={onClose}>
-            Done
+            Acknowledge
           </Button>
           <button 
             onClick={() => {
@@ -156,7 +178,7 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
             }}
             className="w-full text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors"
           >
-            Check another application
+            Check another identity
           </button>
         </div>
       </div>
@@ -184,9 +206,9 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
             <div className="w-6 h-6 rounded bg-slate-900 flex items-center justify-center shadow-lg shadow-slate-200">
               <Terminal className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-slate-400 uppercase">REGISTRY_PORTAL</span>
+            <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-slate-400 uppercase">HARDENED_ACCESS</span>
           </div>
-          <h2 className="text-2xl font-urbanist font-bold text-slate-900">Application Status</h2>
+          <h2 className="text-2xl font-urbanist font-bold text-slate-900">Identity Portal</h2>
         </div>
 
         <AnimatePresence mode="wait">
@@ -205,10 +227,10 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm text-slate-700 font-medium leading-relaxed">
-                      Hello. This tool is for students who have already submitted an application.
+                      Registry Standing Check
                     </p>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      If you haven't applied to Veridex yet, please return to the main page to begin your journey.
+                      Enter your institutional identifier to verify your current status within the Veridex network.
                     </p>
                   </div>
                 </div>
@@ -219,7 +241,7 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
                   onClick={() => setPhase('input')}
                   className="w-full h-14 bg-slate-900 text-white rounded-xl font-urbanist font-bold hover:bg-black transition-all shadow-xl shadow-slate-200 group"
                 >
-                  I have an active application
+                  Lookup Application
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 <Button 
@@ -227,7 +249,7 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
                   onClick={onClose}
                   className="w-full h-14 border-slate-200 text-slate-600 rounded-xl font-urbanist font-bold hover:bg-slate-50 transition-all"
                 >
-                  Return to main page
+                  Return
                 </Button>
               </div>
             </motion.div>
@@ -242,11 +264,11 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
               className="space-y-6"
             >
               <div className="space-y-2">
-                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">REGISTERED EMAIL</label>
+                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">IDENTIFIER (EMAIL)</label>
                 <Input 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="The email you used to apply..."
+                  placeholder="name@university.edu"
                   className="h-14 border-slate-200 focus:border-slate-900 transition-all font-inter bg-white"
                   autoFocus
                 />
@@ -272,7 +294,7 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
                   disabled={!email.includes('@')}
                   className="flex-1 h-14 bg-slate-900 text-white rounded-xl font-urbanist font-bold hover:bg-black transition-all shadow-xl shadow-slate-200 group"
                 >
-                  Lookup Standing
+                  Query Registry
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>
@@ -302,7 +324,7 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
                 </div>
               </div>
               <p className="text-center text-xs text-slate-400 font-inter italic">
-                Scanning the Veridex registry in real-time...
+                Scanning audit logs and state machine...
               </p>
             </motion.div>
           )}
