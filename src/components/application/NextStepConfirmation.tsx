@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldCheck, ArrowRight, X } from 'lucide-react';
-import { Button } from './ui/button';
+import { Button } from "../ui/button";
 
 interface Props {
   isOpen: boolean;

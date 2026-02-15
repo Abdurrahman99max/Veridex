@@ -129,7 +129,10 @@ const emitEvent = async (event_type: string, entity_id: string, payload: any) =>
   await kv.set('pending_events', [...pendingEvents, id]);
   
   // Trigger async processing (mocked as direct call here for simplicity in this environment)
-  await processEvent(event);
+  // We use a slight delay to ensure the main response body isn't locked or dirtied
+  setTimeout(() => {
+    processEvent(event).catch(err => console.error('Background processEvent error:', err));
+  }, 10);
 };
 
 const processEvent = async (event: any) => {
