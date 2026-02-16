@@ -135,6 +135,9 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
   const [actionJustification, setActionJustification] = useState('');
 
   // Menu state
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   // Session Timeout Logic
   useEffect(() => {
     let timeoutId: number;
