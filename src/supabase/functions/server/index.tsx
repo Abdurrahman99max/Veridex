@@ -142,27 +142,33 @@ const processEvent = async (event: any) => {
 
     let subject = '';
     let html = '';
+    let actionTitle = '';
 
     switch (event.event_type) {
       case 'USER_ACCEPTED':
         subject = 'Welcome to Veridex Core';
-        html = `<h1>Congratulations ${applicant.fullName}</h1><p>Your application has been accepted into the Core track.</p>`;
+        actionTitle = 'APPLICATION ACCEPTED';
+        html = `<h1>Congratulations ${applicant.fullName}</h1><p>Your application has been accepted into the Core track.</p><p>Welcome to the institutional registry.</p>`;
         break;
       case 'USER_REJECTED':
         subject = 'Veridex Application Status';
-        html = `<p>We regret to inform you that your application was not successful at this time.</p>`;
+        actionTitle = 'APPLICATION STATUS UPDATE';
+        html = `<p>We regret to inform you that your application was not successful at this time.</p><p>The registry has been updated to reflect this standing.</p>`;
         break;
       case 'STRIKE_ISSUED':
         subject = 'Account Warning: Strike Issued';
-        html = `<h1>Warning</h1><p>A strike has been issued to your account. Reason: ${event.payload.reason}</p>`;
+        actionTitle = 'FORMAL STRIKE ISSUED';
+        html = `<h1>Warning</h1><p>A strike has been issued to your account.</p><p><strong>Reason:</strong> ${event.payload.reason}</p><p>Enforcement Action: ${event.payload.enforcementAction}</p>`;
         break;
       case 'USER_SUSPENDED':
         subject = 'Account Suspended';
+        actionTitle = 'ACCOUNT SUSPENSION';
         html = `<h1>Account Suspended</h1><p>Your account has been suspended until ${new Date(applicant.cooldown_until).toLocaleString()}.</p>`;
         break;
       case 'USER_REVOKED':
         subject = 'Account Revoked';
-        html = `<h1>Access Revoked</h1><p>Your access to Veridex has been permanently revoked.</p>`;
+        actionTitle = 'ACCESS REVOKED';
+        html = `<h1>Access Revoked</h1><p>Your access to Veridex has been permanently revoked due to policy violations.</p>`;
         break;
     }
 
@@ -172,10 +178,24 @@ const processEvent = async (event: any) => {
         to: [applicant.email],
         subject,
         html: `
-          <div style="font-family: monospace; background: #0A0A0B; color: #fff; padding: 40px;">
-            <div style="border: 1px solid #333; padding: 20px;">
-              ${html}
-              <p style="margin-top: 40px; color: #666; font-size: 12px;">Ref: ${event.id}</p>
+          <div style="font-family: 'Courier New', Courier, monospace; background-color: #0A0A0B; color: #ffffff; padding: 40px; margin: 0;">
+            <div style="max-width: 600px; margin: 0 auto; border: 1px solid #333; padding: 30px;">
+              <div style="border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 30px;">
+                <span style="background: #6366f1; color: white; padding: 4px 8px; font-size: 10px; font-weight: bold; letter-spacing: 2px;">VERIDEX</span>
+                <span style="float: right; font-size: 10px; color: #666;">REF: ${event.id.substring(0, 12)}</span>
+              </div>
+              
+              <div style="margin-bottom: 40px;">
+                <div style="font-size: 10px; color: #6366f1; font-weight: bold; margin-bottom: 10px; letter-spacing: 1px;">[ ${actionTitle} ]</div>
+                <div style="line-height: 1.6; font-size: 14px; color: #cccccc;">
+                  ${html}
+                </div>
+              </div>
+
+              <div style="border-top: 1px solid #333; padding-top: 20px; color: #666; font-size: 11px;">
+                <p>This is an automated institutional notification. No action is required unless specified.</p>
+                <p style="margin-top: 10px; font-size: 9px; opacity: 0.5;">ID: ${applicant.id} | TIMESTAMP: ${new Date().toISOString()}</p>
+              </div>
             </div>
           </div>
         `
@@ -227,6 +247,11 @@ const executeTransitionInternal = async (applicationId: string, newState: Applic
     last_modified: new Date().toISOString(),
     last_modified_by: operator
   };
+
+  if (newState === 'ARCHIVED') {
+    updatedApplicant.manual_archive_id = `ARC-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
+    updatedApplicant.archived_by = operator;
+  }
 
   if (newState === 'REVOKED') {
     updatedApplicant.account_status = 'REVOKED';
@@ -496,10 +521,21 @@ app.post(`${prefix}/admin/request-otp`, async (c) => {
     await kv.set(`otp:${email.toLowerCase()}`, { code: otp, expires });
     
     await resend.emails.send({
-      from: 'Veridex Hub <onboarding@resend.dev>',
+      from: 'Veridex Hub <notifications@resend.dev>',
       to: [email],
-      subject: 'Veridex Access Code',
-      html: `<h1>Code: ${otp}</h1>`
+      subject: 'Veridex Hub Access Code',
+      html: `
+        <div style="font-family: 'Courier New', Courier, monospace; background-color: #0A0A0B; color: #ffffff; padding: 40px;">
+          <div style="max-width: 500px; margin: 0 auto; border: 1px solid #333; padding: 40px; text-align: center;">
+            <div style="font-size: 10px; color: #6366f1; font-weight: bold; margin-bottom: 20px; letter-spacing: 2px;">[ VERIDEX ACCESS PROTOCOL ]</div>
+            <h1 style="font-size: 32px; letter-spacing: 8px; color: #ffffff; margin: 20px 0;">${otp}</h1>
+            <p style="color: #666; font-size: 12px; margin-top: 30px;">Verification code expires in 10 minutes.</p>
+            <div style="border-top: 1px solid #333; padding-top: 20px; margin-top: 40px; font-size: 9px; opacity: 0.3; color: #666;">
+              SECURE ADMIN ENTRY | INSTITUTIONAL GATEWAY
+            </div>
+          </div>
+        </div>
+      `
     });
 
     return c.json({ success: true });
@@ -541,7 +577,58 @@ app.post(`${prefix}/admin/whitelist`, async (c) => {
   }
 });
 
-// 11. Legacy Endpoints (Refactored to RPC internally)
+// 11. Vault Operations
+app.post(`${prefix}/vault/upload`, async (c) => {
+  try {
+    const formData = await c.req.formData();
+    const file = formData.get('file') as File;
+    const path = formData.get('path') as string;
+
+    if (!file || !path) {
+      return c.json({ error: 'Missing file or path' }, 400);
+    }
+
+    const supabase = await getSupabase();
+    
+    // Create bucket if not exists
+    const { data: buckets } = await supabase.storage.listBuckets();
+    if (!buckets?.some(b => b.name === BUCKET_NAME)) {
+      await supabase.storage.createBucket(BUCKET_NAME, { public: false });
+    }
+
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (error) throw error;
+
+    return c.json({ success: true, path: data.path });
+  } catch (err) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+app.post(`${prefix}/admin/signed-url`, async (c) => {
+  try {
+    const { path } = await c.req.json();
+    const supabase = await getSupabase();
+    
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .createSignedUrl(path, 3600); // 1 hour
+
+    if (error) throw error;
+
+    return c.json({ url: data.signedUrl });
+  } catch (err) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// 12. Legacy Endpoints (Refactored to RPC internally)
 app.patch(`${prefix}/admin/applicants/:id`, async (c) => {
   const id = c.req.param('id');
   const { status, adminFeedback, operator } = await c.req.json();

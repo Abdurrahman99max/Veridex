@@ -74,6 +74,8 @@ interface Applicant {
   motivation?: string;
   commitment?: string;
   documentPath?: string;
+  manual_archive_id?: string;
+  archived_by?: string;
   // Prep specific
   skillLevel?: string;
   learningMethods?: string[];
@@ -112,7 +114,7 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [whitelist, setWhitelist] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'applicants' | 'logs' | 'team' | 'policy'>('applicants');
+  const [activeTab, setActiveTab] = useState<'applicants' | 'logs' | 'team' | 'policy' | 'archive'>('applicants');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'core' | 'prep'>('all');
@@ -332,12 +334,26 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
   };
 
   const filteredApplicants = applicants.filter(a => {
-    const matchesTrack = filter === 'all' || a.track === filter;
+    // Safe access for searches
+    const name = a?.fullName || '';
+    const email = a?.email || '';
+    const id = a?.id || '';
+    
+    const matchesTrack = filter === 'all' || a?.track === filter;
     const matchesSearch = 
-      (a.fullName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (a.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (a.id || '').toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesTrack && matchesSearch && (activeTab === 'applicants' ? a.application_state !== 'ARCHIVED' : true);
+      name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      id.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Attended logic
+    const isAttended = a?.application_state !== 'APPLIED' || a?.account_status !== 'ACTIVE';
+
+    if (activeTab === 'archive') {
+       return isAttended && matchesSearch;
+    }
+
+    // Main views (Operations, Core, Prep) only show unattended
+    return matchesTrack && matchesSearch && !isAttended;
   });
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
@@ -370,6 +386,9 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
         </button>
         <button onClick={() => { setActiveTab('applicants'); setFilter('prep'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-all ${activeTab === 'applicants' && filter === 'prep' ? 'bg-indigo-500/10 text-indigo-500 font-bold' : 'hover:bg-white/5'}`}>
           <Activity className="w-4 h-4" /> Prep Program
+        </button>
+        <button onClick={() => { setActiveTab('archive'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-all ${activeTab === 'archive' ? 'bg-amber-500/10 text-amber-500 font-bold' : 'hover:bg-white/5'}`}>
+          <Archive className="w-4 h-4" /> Archive Vault
         </button>
         
         <div className="text-[10px] uppercase tracking-widest opacity-40 font-bold px-3 py-2 mt-6">Governance</div>
@@ -437,62 +456,80 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
         <div className="flex-1 overflow-auto">
           {isLoading ? (
             <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>
-          ) : activeTab === 'applicants' ? (
+          ) : (activeTab === 'applicants' || activeTab === 'archive') ? (
             <div className="min-w-full">
+              <div className={`px-6 py-4 border-b ${borderColor} flex items-center justify-between`}>
+                 <h2 className={`${headingColor} font-bold uppercase tracking-widest text-xs`}>
+                    {activeTab === 'archive' ? 'Institutional Archive' : (filter === 'all' ? 'Operations Hub' : `${filter.toUpperCase()} Track Queue`)}
+                 </h2>
+                 <div className="text-[10px] opacity-40 font-bold uppercase">{filteredApplicants.length} Records Found</div>
+              </div>
               <table className="w-full border-collapse">
                 <thead className={`sticky top-0 ${surfaceColor} z-10`}>
                   <tr className={`border-b ${borderColor} text-[10px] uppercase tracking-widest opacity-50 font-bold`}>
                     <th className="text-left py-4 px-4 md:px-6">Identity</th>
                     <th className="text-left py-4 px-4 md:px-6 hidden sm:table-cell">Institution</th>
                     <th className="text-left py-4 px-4 md:px-6">Standing</th>
-                    <th className="text-left py-4 px-4 md:px-6 hidden md:table-cell">Strikes</th>
+                    {activeTab === 'archive' ? (
+                       <th className="text-left py-4 px-4 md:px-6 hidden md:table-cell">Archive Reference</th>
+                    ) : (
+                       <th className="text-left py-4 px-4 md:px-6 hidden md:table-cell">Strikes</th>
+                    )}
                     <th className="text-right py-4 px-4 md:px-6">Control</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredApplicants.map((a) => (
-                    <tr key={a.id} className={`border-b ${borderColor} hover:bg-white/[0.02] cursor-default transition-all ${selectedId === a.id ? 'bg-indigo-500/5' : ''}`}>
-                      <td className="py-4 px-4 md:px-6 cursor-pointer" onClick={() => setSelectedId(a.id)}>
+                    <tr key={a?.id || Math.random().toString()} className={`border-b ${borderColor} hover:bg-white/[0.02] cursor-default transition-all ${selectedId === a?.id ? 'bg-indigo-500/5' : ''}`}>
+                      <td className="py-4 px-4 md:px-6 cursor-pointer" onClick={() => setSelectedId(a?.id)}>
                         <div className="flex flex-col">
-                          <span className="font-bold text-[10px] opacity-40 uppercase tracking-tighter mb-0.5">{a.id}</span>
-                          <span className={`${headingColor} font-bold truncate max-w-[150px] sm:max-w-none`}>{a.fullName}</span>
+                          <span className="font-bold text-[10px] opacity-40 uppercase tracking-tighter mb-0.5">{a?.id || 'NO_ID'}</span>
+                          <span className={`${headingColor} font-bold truncate max-w-[150px] sm:max-w-none`}>{a?.fullName || 'Legacy Record'}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-6 hidden sm:table-cell cursor-pointer" onClick={() => setSelectedId(a.id)}>
-                        <div className="text-[12px] opacity-70 truncate max-w-[200px]">{a.university}</div>
+                      <td className="py-4 px-6 hidden sm:table-cell cursor-pointer" onClick={() => setSelectedId(a?.id)}>
+                        <div className="text-[12px] opacity-70 truncate max-w-[200px]">{a?.university || 'Unknown'}</div>
                       </td>
-                      <td className="py-4 px-4 md:px-6 cursor-pointer" onClick={() => setSelectedId(a.id)}>
+                      <td className="py-4 px-4 md:px-6 cursor-pointer" onClick={() => setSelectedId(a?.id)}>
                         <div className="flex flex-col items-start gap-1">
                           <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
-                            a.application_state === 'ACCEPTED' ? 'bg-emerald-500/10 text-emerald-500' : 
-                            a.application_state === 'REJECTED' || a.application_state === 'REVOKED' ? 'bg-rose-500/10 text-rose-500' : 
-                            a.application_state === 'ROUTED_TO_PREP' ? 'bg-amber-500/10 text-amber-500' :
+                            a?.application_state === 'ACCEPTED' ? 'bg-emerald-500/10 text-emerald-500' : 
+                            a?.application_state === 'REJECTED' || a?.application_state === 'REVOKED' ? 'bg-rose-500/10 text-rose-500' : 
+                            a?.application_state === 'ROUTED_TO_PREP' ? 'bg-amber-500/10 text-amber-500' :
                             'bg-slate-500/10 text-slate-400'
                           }`}>
-                            {a.account_status === 'SUSPENDED' ? 'SUSPENDED' : (a.application_state || 'APPLIED')}
+                            {a?.account_status === 'SUSPENDED' ? 'SUSPENDED' : (a?.application_state || 'APPLIED')}
                           </span>
-                          {a.reliabilityTier && (
-                             <span className="text-[8px] font-bold uppercase tracking-tight opacity-50 px-2 py-0.5 bg-white/5 rounded border border-white/5">
-                                {a.reliabilityTier.replace('_', ' ')}
-                             </span>
-                          )}
                         </div>
                       </td>
-                      <td className="py-4 px-6 hidden md:table-cell cursor-pointer" onClick={() => setSelectedId(a.id)}>
-                        <span className={`text-xs font-bold ${a.strike_count && a.strike_count > 0 ? 'text-rose-500' : 'opacity-20'}`}>
-                          {a.strike_count || 0}
-                        </span>
+                      <td className="py-4 px-6 hidden md:table-cell cursor-pointer" onClick={() => setSelectedId(a?.id)}>
+                        {activeTab === 'archive' ? (
+                          <div className="flex flex-col">
+                            <span className="text-[9px] font-bold opacity-30 uppercase tracking-tighter">
+                              {a?.manual_archive_id ? 'MANUAL ARCHIVE' : 'AUTO PROCESSED'}
+                            </span>
+                            <span className="text-[10px] font-bold text-indigo-500/50 truncate max-w-[120px]">
+                              {a?.manual_archive_id || a?.last_modified_by || 'SYSTEM'}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className={`text-xs font-bold ${a?.strike_count && a?.strike_count > 0 ? 'text-rose-500' : 'opacity-20'}`}>
+                            {a?.strike_count || 0}
+                          </span>
+                        )}
                       </td>
                       <td className="py-4 px-4 md:px-6 text-right relative">
-                        <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === a.id ? null : a.id); }} className={`p-2 rounded-md hover:bg-white/10 transition-colors ${activeMenuId === a.id ? 'bg-white/10 text-indigo-500' : 'text-slate-500'}`}>
+                        <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === a?.id ? null : a?.id); }} className={`p-2 rounded-md hover:bg-white/10 transition-colors ${activeMenuId === a?.id ? 'bg-white/10 text-indigo-500' : 'text-slate-500'}`}>
                           <MoreHorizontal className="w-5 h-5" />
                         </button>
-                        {activeMenuId === a.id && (
+                        {activeMenuId === a?.id && (
                           <div ref={menuRef} className={`absolute right-10 top-12 w-48 ${surfaceColor} border ${borderColor} rounded-xl shadow-2xl z-[50] overflow-hidden py-1 animate-in fade-in zoom-in duration-150`}>
-                            <button onClick={() => { setSelectedId(a.id); setActiveMenuId(null); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-white/5 transition-colors text-left"><Eye className="w-4 h-4 text-indigo-500" /> View Detailed File</button>
-                            <button onClick={() => initiateAction({ id: a.id, type: 'status_update', newState: 'archived', label: 'Archive Record', warning: 'Moving to deep archive. Student standing will be preserved but hidden from active view.' })} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-white/5 transition-colors text-left"><Archive className="w-4 h-4 text-amber-500" /> Archive Record</button>
+                            <button onClick={() => { setSelectedId(a?.id); setActiveMenuId(null); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-white/5 transition-colors text-left"><Eye className="w-4 h-4 text-indigo-500" /> View Detailed File</button>
+                            {a?.application_state === 'APPLIED' && (
+                              <button onClick={() => initiateAction({ id: a?.id, type: 'status_update', newState: 'archived', label: 'Archive Record', warning: 'Moving to deep archive. Student standing will be preserved but hidden from active view.' })} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-white/5 transition-colors text-left"><Archive className="w-4 h-4 text-amber-500" /> Archive Record</button>
+                            )}
                             <div className="h-px bg-white/5 my-1" />
-                            <button onClick={() => initiateAction({ id: a.id, type: 'strike', label: 'Issue Formal Strike', warning: 'This action initiates the disciplinary escalation protocol. Multiple strikes will lead to automatic suspension or revocation.' })} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-rose-500/10 text-rose-500 transition-colors text-left font-bold"><AlertTriangle className="w-4 h-4" /> Issue Strike</button>
+                            <button onClick={() => initiateAction({ id: a?.id, type: 'strike', label: 'Issue Formal Strike', warning: 'This action initiates the disciplinary escalation protocol. Multiple strikes will lead to automatic suspension or revocation.' })} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-rose-500/10 text-rose-500 transition-colors text-left font-bold"><AlertTriangle className="w-4 h-4" /> Issue Strike</button>
                           </div>
                         )}
                       </td>

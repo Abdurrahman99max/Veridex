@@ -1133,6 +1133,10 @@
     max-width: var(--container-7xl);
   }
 
+  .max-w-\[120px\] {
+    max-width: 120px;
+  }
+
   .max-w-\[150px\] {
     max-width: 150px;
   }
@@ -2647,6 +2651,16 @@
 
   .text-indigo-500 {
     color: var(--color-indigo-500);
+  }
+
+  .text-indigo-500\/50 {
+    color: color-mix(in srgb, oklch(.585 .233 277.117) 50%, transparent);
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .text-indigo-500\/50 {
+      color: color-mix(in oklab, var(--color-indigo-500) 50%, transparent);
+    }
   }
 
   .text-indigo-500\/70 {

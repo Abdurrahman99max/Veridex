@@ -55,8 +55,8 @@ export const Step3Verification: React.FC<VerificationProps> = ({ onNext, onBack,
     setIsUploading(true);
     setStatus('encrypting');
     
-    // Aesthetic delay for processing
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Aesthetic delay for processing - reduced for efficiency
+    await new Promise(resolve => setTimeout(resolve, 600));
     
     setStatus('uploading');
     try {
