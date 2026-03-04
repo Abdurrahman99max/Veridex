@@ -61,7 +61,7 @@ export const PrepStep3Commitment: React.FC<PrepStep3Props> = ({ onBack, onSubmit
                     Veridex’s Preparation Track is designed for students who are willing to commit time and effort to becoming task-ready.
                 </p>
                 <p className="font-inter font-medium text-slate-700 leading-relaxed">
-                    This is not a guaranteed path into Veridex Core.
+                    This is not a guaranteed path into Veridex Core. Students who complete the program and demonstrate task-ready capability will be prioritized for Core access.
                 </p>
             </div>
         </div>

@@ -111,22 +111,28 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
             animate={{ opacity: 1, y: 0 }}
             className="space-y-10"
           >
+            {/* Step badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-50 border border-teal-200 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+              <span className="text-[10px] font-mono font-bold tracking-widest text-teal-700 uppercase">STEP: COMMITMENT</span>
+            </div>
+
             <div className="space-y-3 px-2">
               <h3 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900 leading-tight">Read carefully before submitting</h3>
               <p className="text-slate-500 text-xs sm:text-sm font-inter leading-relaxed">
                 Veridex's Preparation Program is designed for students who are willing to commit time and effort to becoming task-ready.<br className="hidden sm:block" />
-                <span className="font-bold">This is not a guaranteed path into Veridex Core.</span>
+                <span className="font-bold text-slate-700">This is not a guaranteed path into Veridex Core. Students who complete the program and demonstrate task-ready capability will be prioritized for Core access.</span>
               </p>
             </div>
 
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label className="text-sm font-urbanist font-bold text-slate-900">Weekly time you can realistically commit</Label>
+                <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">WEEKLY TIME YOU CAN COMMIT</Label>
                 <Select 
                   value={prepData.weeklyHours} 
                   onValueChange={(val) => setPrepData({...prepData, weeklyHours: val})}
                 >
-                  <SelectTrigger className="h-14 border-slate-200 focus:ring-slate-900/5 focus:border-slate-900 font-inter bg-white">
+                  <SelectTrigger className="h-14 border-slate-200 focus:ring-teal-600/10 focus:border-teal-600 font-inter bg-white">
                     <SelectValue placeholder="Select Hours" />
                   </SelectTrigger>
                   <SelectContent>
@@ -138,12 +144,12 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-urbanist font-bold text-slate-900">What is your primary goal after completing the track?</Label>
+                <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">YOUR PRIMARY GOAL AFTER THE TRACK</Label>
                 <Select 
                   value={prepData.primaryGoal} 
                   onValueChange={(val) => setPrepData({...prepData, primaryGoal: val})}
                 >
-                  <SelectTrigger className="h-14 border-slate-200 focus:ring-slate-900/5 focus:border-slate-900 font-inter bg-white">
+                  <SelectTrigger className="h-14 border-slate-200 focus:ring-teal-600/10 focus:border-teal-600 font-inter bg-white">
                     <SelectValue placeholder="Select Goal" />
                   </SelectTrigger>
                   <SelectContent>
@@ -155,14 +161,14 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
               </div>
 
               <div className="space-y-4 pt-4">
-                <Label className="text-lg font-urbanist font-bold text-slate-900">Commitment confirmation</Label>
+                <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">COMMITMENT CONFIRMATION</Label>
                 <div className="space-y-3">
                   <label className="flex items-start gap-3 p-4 sm:p-5 rounded-xl border border-slate-100 bg-white hover:border-slate-200 transition-all cursor-pointer group active:scale-[0.99]">
                     <input 
                       type="checkbox" 
                       checked={confirmedStatus.noGuarantee}
                       onChange={(e) => setConfirmedStatus({...confirmedStatus, noGuarantee: e.target.checked})}
-                      className="shrink-0 mt-1 w-5 h-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                      className="shrink-0 mt-1 w-5 h-5 rounded border-slate-300 text-slate-900 focus:ring-teal-600"
                     />
                     <span className="text-[13px] sm:text-sm font-inter text-slate-600 leading-tight">I understand this does not guarantee acceptance into Veridex Core</span>
                   </label>
@@ -172,7 +178,7 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
                       type="checkbox" 
                       checked={confirmedStatus.effort}
                       onChange={(e) => setConfirmedStatus({...confirmedStatus, effort: e.target.checked})}
-                      className="shrink-0 mt-1 w-5 h-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                      className="shrink-0 mt-1 w-5 h-5 rounded border-slate-300 text-slate-900 focus:ring-teal-600"
                     />
                     <span className="text-[13px] sm:text-sm font-inter text-slate-600 leading-tight">I am willing to put in consistent effort to improve my skills</span>
                   </label>
@@ -198,6 +204,12 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
   return (
     <ApplicationLayout currentStep={4} totalSteps={4} title="Work Capacity" onBack={onBack}>
       <div className="w-full space-y-8 sm:space-y-12 pb-20">
+        {/* Step badge */}
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-50 border border-teal-200 rounded-full">
+          <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+          <span className="text-[10px] font-mono font-bold tracking-widest text-teal-700 uppercase">STEP: CAPACITY</span>
+        </div>
+
         <div className="text-center space-y-3 px-2">
           <h2 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900">Weekly Commitment</h2>
           <p className="text-slate-500 font-inter text-sm max-w-md mx-auto">Choose the weekly hours you can realistically dedicate to projects.</p>

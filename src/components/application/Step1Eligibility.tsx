@@ -275,7 +275,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                       </div>
                     ) : (
                       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="p-4 sm:p-6 bg-slate-50 border border-slate-100 rounded-2xl">
+                        <div className="p-4 sm:p-6 bg-slate-50 border border-slate-100 border-t-4 border-t-teal-600 rounded-2xl">
                           <div className="flex items-start gap-4">
                             <div className="p-2 bg-indigo-50 rounded-lg shrink-0 border border-indigo-100">
                               <ShieldCheck className="w-5 h-5 text-indigo-600" />
@@ -300,7 +300,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                                 value={formData.fullName}
                                 onChange={(e) => setFormData({...formData, fullName: e.target.value})}
                                 placeholder="Alex Chen"
-                                className="h-12 border-slate-200 focus:border-slate-900 transition-all font-inter bg-white"
+                                className="h-12 border-slate-200 focus:border-teal-600 focus:ring-teal-600/10 transition-all font-inter bg-white"
                               />
                             </div>
                             <div className="space-y-2">
@@ -309,7 +309,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                                 value={formData.university}
                                 onChange={(e) => setFormData({...formData, university: e.target.value})}
                                 placeholder="University of Waterloo"
-                                className="h-12 border-slate-200 focus:border-slate-900 transition-all font-inter bg-white"
+                                className="h-12 border-slate-200 focus:border-teal-600 focus:ring-teal-600/10 transition-all font-inter bg-white"
                               />
                             </div>
                           </div>
@@ -320,7 +320,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                               value={formData.skillCategory} 
                               onValueChange={(val) => setFormData({...formData, skillCategory: val})}
                             >
-                              <SelectTrigger className="h-12 border-slate-200 focus:ring-slate-900/5 focus:border-slate-900 font-inter bg-white">
+                              <SelectTrigger className="h-12 border-slate-200 focus:ring-teal-600/10 focus:border-teal-600 font-inter bg-white">
                                 <SelectValue placeholder="Select your domain" />
                               </SelectTrigger>
                               <SelectContent>
@@ -346,7 +346,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                                     value={formData.email}
                                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                                     placeholder="Private email (e.g. name@gmail.com)"
-                                    className={`pl-12 h-14 border-slate-200 transition-all font-inter bg-white focus:border-slate-900 ${isEmailProvided ? 'border-indigo-200' : ''}`}
+                                    className={`pl-12 h-14 border-slate-200 transition-all font-inter bg-white focus:border-teal-600 focus:ring-teal-600/10 ${isEmailProvided ? 'border-indigo-200' : ''}`}
                                   />
                                 </div>
                               </div>
@@ -369,7 +369,13 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
 
                 {selectedPath === 'prep' && (
                   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="p-5 sm:p-6 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
+                    {/* Step badge */}
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-50 border border-teal-200 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                      <span className="text-[10px] font-mono font-bold tracking-widest text-teal-700 uppercase">STEP: IDENTITY</span>
+                    </div>
+
+                    <div className="p-5 sm:p-6 bg-indigo-50/50 border border-indigo-100 border-t-4 border-t-teal-600 rounded-2xl">
                       <div className="flex items-start gap-4">
                         <div className="p-2 bg-white rounded-lg border border-indigo-100 shrink-0">
                           <Info className="w-5 h-5 text-indigo-500" />
@@ -386,44 +392,44 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
 
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <Label className="text-sm font-urbanist font-bold text-slate-900">Full Name</Label>
+                        <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">FULL NAME</Label>
                         <Input 
                           value={formData.fullName}
                           onChange={(e) => setFormData({...formData, fullName: e.target.value})}
                           placeholder="e.g. Alex Chen"
-                          className="h-14 border-slate-200 focus:border-slate-900 transition-all font-inter bg-white"
+                          className="h-14 border-slate-200 focus:border-teal-600 focus:ring-teal-600/10 transition-all font-inter bg-white"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-urbanist font-bold text-slate-900">University</Label>
+                        <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">UNIVERSITY</Label>
                         <Input 
                           value={formData.university}
                           onChange={(e) => setFormData({...formData, university: e.target.value})}
                           placeholder="e.g. University of Waterloo"
-                          className="h-14 border-slate-200 focus:border-slate-900 transition-all font-inter bg-white"
+                          className="h-14 border-slate-200 focus:border-teal-600 focus:ring-teal-600/10 transition-all font-inter bg-white"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-urbanist font-bold text-slate-900">Private Email Address</Label>
+                        <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">CONTACT EMAIL</Label>
                         <Input 
                           type="email"
                           value={formData.email}
                           onChange={(e) => setFormData({...formData, email: e.target.value})}
                           placeholder="e.g. name@gmail.com"
-                          className="h-14 border-slate-200 focus:border-slate-900 transition-all font-inter bg-white"
+                          className="h-14 border-slate-200 focus:border-teal-600 focus:ring-teal-600/10 transition-all font-inter bg-white"
                         />
                         <p className="text-[10px] text-slate-400 font-inter">Please provide a private email (Gmail, Outlook, etc.). Avoid using .edu or student addresses.</p>
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-urbanist font-bold text-slate-900">Expected Graduation Year</Label>
+                        <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">EXPECTED GRADUATION YEAR</Label>
                         <Select 
                           value={formData.gradYear} 
                           onValueChange={(val) => setFormData({...formData, gradYear: val})}
                         >
-                          <SelectTrigger className="h-14 border-slate-200 focus:ring-slate-900/5 focus:border-slate-900 font-inter bg-white">
+                          <SelectTrigger className="h-14 border-slate-200 focus:ring-teal-600/10 focus:border-teal-600 font-inter bg-white">
                             <SelectValue placeholder="Select Year" />
                           </SelectTrigger>
                           <SelectContent>
@@ -442,12 +448,12 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-urbanist font-bold text-slate-900">Application Reason</Label>
+                        <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">APPLICATION REASON</Label>
                         <Select 
                           value={formData.motivation} 
                           onValueChange={(val) => setFormData({...formData, motivation: val})}
                         >
-                          <SelectTrigger className="h-14 border-slate-200 focus:ring-slate-900/5 focus:border-slate-900 font-inter bg-white">
+                          <SelectTrigger className="h-14 border-slate-200 focus:ring-teal-600/10 focus:border-teal-600 font-inter bg-white">
                             <SelectValue placeholder="Select Motivation" />
                           </SelectTrigger>
                           <SelectContent>

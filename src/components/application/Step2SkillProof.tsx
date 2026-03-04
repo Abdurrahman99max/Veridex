@@ -203,6 +203,12 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
             animate={{ opacity: 1, y: 0 }}
             className="space-y-8"
           >
+            {/* Step badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-50 border border-teal-200 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+              <span className="text-[10px] font-mono font-bold tracking-widest text-teal-700 uppercase">STEP: SKILL AUDIT</span>
+            </div>
+
             <div className="space-y-4">
               <h3 className="text-xl sm:text-2xl font-urbanist font-bold text-slate-900 leading-tight">What do you want to become task-ready in?</h3>
               <p className="text-slate-500 text-sm font-inter leading-relaxed">
@@ -224,12 +230,12 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
 
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label className="text-sm font-urbanist font-bold text-slate-900">Primary Skill You Want to Develop</Label>
+                <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">PRIMARY SKILL TO DEVELOP</Label>
                 <Select 
                   value={selectedDomain || ''} 
                   onValueChange={(val) => setSelectedDomain(val)}
                 >
-                  <SelectTrigger className="h-14 border-slate-200 focus:ring-slate-900/5 focus:border-slate-900 font-inter bg-white">
+                  <SelectTrigger className="h-14 border-slate-200 focus:ring-teal-600/10 focus:border-teal-600 font-inter bg-white">
                     <SelectValue placeholder="Select Skill" />
                   </SelectTrigger>
                   <SelectContent>
@@ -251,7 +257,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
                         value={formData.customSkill}
                         onChange={(e) => setFormData({...formData, customSkill: e.target.value})}
                         placeholder="Please specify your skill..."
-                        className="h-12 border-slate-200 focus:border-slate-900 transition-all font-inter bg-white"
+                        className="h-12 border-slate-200 focus:border-teal-600 focus:ring-teal-600/10 transition-all font-inter bg-white"
                       />
                     </motion.div>
                   )}
@@ -259,12 +265,12 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-urbanist font-bold text-slate-900">Your current level in this skill</Label>
+                <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">YOUR CURRENT LEVEL</Label>
                 <Select 
                   value={formData.skillLevel} 
                   onValueChange={(val) => setFormData({...formData, skillLevel: val})}
                 >
-                  <SelectTrigger className="h-14 border-slate-200 focus:ring-slate-900/5 focus:border-slate-900 font-inter bg-white">
+                  <SelectTrigger className="h-14 border-slate-200 focus:ring-teal-600/10 focus:border-teal-600 font-inter bg-white">
                     <SelectValue placeholder="Select Level" />
                   </SelectTrigger>
                   <SelectContent>
@@ -276,7 +282,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
               </div>
 
               <div className="space-y-4">
-                <Label className="text-sm font-urbanist font-bold text-slate-900">How are you currently learning this skill?</Label>
+                <Label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">HOW YOU'RE CURRENTLY LEARNING</Label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {learningMethods.map((method) => (
                     <button

@@ -283,7 +283,7 @@ export default function App() {
 
       case 'application':
         return (
-          <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
+          <div className="min-h-screen flex flex-col bg-[#EEF2F7] overflow-x-hidden">
             {isSubmitting && (
               <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">

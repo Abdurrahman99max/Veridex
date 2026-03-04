@@ -543,26 +543,66 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
             </div>
           ) : activeTab === 'logs' ? (
             <div className="p-6 space-y-4">
-              <h2 className={`${headingColor} font-bold text-lg mb-6 uppercase tracking-widest`}>Registry Immutable Audit Log</h2>
-              {auditLogs.map((log) => (
-                <div key={log.id} className={`${surfaceColor} border ${borderColor} p-4 rounded-lg flex items-start gap-4 hover:border-indigo-500/50 transition-all`}>
-                  <div className={`p-2 rounded bg-white/5`}><Activity className="w-4 h-4 text-indigo-500" /></div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">{log.action_type}</span>
-                      <span className="text-[10px] opacity-40">{new Date(log.timestamp).toLocaleString()}</span>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className={`${headingColor} font-bold text-lg uppercase tracking-widest`}>Audit Registry</h2>
+                <span className={`text-[10px] font-mono font-bold px-3 py-1 rounded-full border ${borderColor} opacity-50`}>{auditLogs.length} ENTRIES</span>
+              </div>
+              <p className={`text-xs ${textColor} opacity-60 mb-4`}>Every action below is permanent and cannot be edited or removed. This is your platform's accountability record.</p>
+              {auditLogs.length === 0 ? (
+                <div className={`${surfaceColor} border ${borderColor} rounded-xl p-12 text-center`}>
+                  <Terminal className="w-8 h-8 mx-auto opacity-20 mb-3" />
+                  <p className="text-xs opacity-30 uppercase tracking-widest font-bold">No activity recorded yet</p>
+                </div>
+              ) : auditLogs.map((log) => {
+                const actionMap: Record<string, { label: string; colorClass: string; bgClass: string }> = {
+                  'STATUS_ACCEPTED': { label: 'Application Approved', colorClass: 'text-emerald-500', bgClass: 'bg-emerald-500/10' },
+                  'STATUS_REJECTED': { label: 'Application Declined', colorClass: 'text-rose-500', bgClass: 'bg-rose-500/10' },
+                  'STATUS_ARCHIVED': { label: 'Record Archived', colorClass: 'text-amber-500', bgClass: 'bg-amber-500/10' },
+                  'ROUTED_TO_PREP': { label: 'Redirected to Prep Track', colorClass: 'text-blue-400', bgClass: 'bg-blue-500/10' },
+                  'STRIKE_ISSUED': { label: 'Disciplinary Strike Issued', colorClass: 'text-amber-500', bgClass: 'bg-amber-500/10' },
+                  'ACCOUNT_REVOKED': { label: 'Access Permanently Revoked', colorClass: 'text-rose-500', bgClass: 'bg-rose-500/10' },
+                  'PROMOTED_TO_CORE': { label: 'Promoted to Core Track', colorClass: 'text-indigo-400', bgClass: 'bg-indigo-500/10' },
+                  'APPLICATION_SUBMITTED': { label: 'Application Submitted', colorClass: 'text-slate-400', bgClass: 'bg-white/5' },
+                };
+                const action = actionMap[log.action_type] || { label: log.action_type.replace(/_/g, ' '), colorClass: 'text-indigo-400', bgClass: 'bg-indigo-500/10' };
+                const logDate = new Date(log.timestamp);
+                const now = new Date();
+                const diffMs = now.getTime() - logDate.getTime();
+                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                const relativeTime = diffDays === 0 ? 'Today' : diffDays === 1 ? 'Yesterday' : `${diffDays} days ago`;
+
+                return (
+                  <div key={log.id} className={`${surfaceColor} border ${borderColor} p-5 rounded-xl flex items-start gap-4 hover:border-indigo-500/30 transition-all`}>
+                    <div className={`p-2.5 rounded-lg shrink-0 ${action.bgClass}`}>
+                      <Activity className={`w-4 h-4 ${action.colorClass}`} />
                     </div>
-                    <p className="text-xs opacity-70 mb-2">{log.note}</p>
-                    <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-bold opacity-30 uppercase">Actor:</span>
-                        <span className="text-[10px] font-bold text-indigo-500/70">{log.actor_id}</span>
-                        <span className="text-[9px] font-bold opacity-30 uppercase ml-4">Entity:</span>
-                        <span className="text-[10px] font-bold text-slate-500">{log.entity_id}</span>
-                        <span className="text-[9px] opacity-20 uppercase ml-auto">Hash: {log.id.substring(0, 12)}</span>
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="flex items-start justify-between gap-2 flex-wrap">
+                        <div>
+                          <span className={`text-xs font-bold ${action.colorClass}`}>{action.label}</span>
+                          <div className="text-[10px] font-mono opacity-30 mt-0.5">{log.action_type}</div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-[10px] font-bold opacity-50">{relativeTime}</div>
+                          <div className="text-[9px] opacity-30">{logDate.toLocaleString()}</div>
+                        </div>
+                      </div>
+                      {log.note && <p className="text-xs opacity-60 leading-relaxed italic">"{log.note}"</p>}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 border-t border-white/5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-bold opacity-30 uppercase">Admin</span>
+                          <span className={`text-[10px] font-bold ${action.colorClass} opacity-70`}>{log.actor_id}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-bold opacity-30 uppercase">Student ID</span>
+                          <span className="text-[10px] font-mono opacity-40">{log.entity_id}</span>
+                        </div>
+                        <span className="text-[9px] opacity-20 ml-auto font-mono">#{log.id.substring(0, 8)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : activeTab === 'policy' ? (
             <div className="p-6 max-w-4xl mx-auto space-y-8">
@@ -625,27 +665,28 @@ export function AdminHub({ token, adminEmail }: AdminHubProps) {
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500"><ShieldAlert className="w-6 h-6" /></div>
                 <div>
-                  <h3 className={`text-lg font-bold ${headingColor} tracking-tight`}>Safety Interlock</h3>
-                  <p className="text-[10px] font-mono text-amber-500/70 uppercase tracking-widest">Administrative Confirmation Required</p>
+                  <h3 className={`text-lg font-bold ${headingColor} tracking-tight`}>Hold On — Review This First</h3>
+                  <p className="text-[10px] font-mono text-amber-500/70 uppercase tracking-widest">One more step before this goes through</p>
                 </div>
               </div>
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 mb-6">
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 mb-5">
                 <p className={`text-xs font-bold ${headingColor} mb-2 uppercase tracking-wide`}>{pendingAction.label}</p>
                 <p className="text-xs text-slate-400 leading-relaxed">{pendingAction.warning}</p>
               </div>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold opacity-30 uppercase tracking-widest">Immutable Justification</label>
-                  <textarea className={`w-full h-24 ${inputBg} border ${borderColor} rounded-xl p-3 text-xs focus:ring-1 focus:ring-indigo-500 outline-none resize-none`} placeholder="Detail the reason for this governance action..." value={actionJustification} onChange={(e) => setActionJustification(e.target.value)} />
+                  <label className={`text-[10px] font-bold uppercase tracking-widest ${textColor}`}>Why are you making this change?</label>
+                  <p className="text-[10px] opacity-40">Your reason will be permanently recorded and cannot be edited once submitted.</p>
+                  <textarea className={`w-full h-24 ${inputBg} border ${borderColor} rounded-xl p-3 text-xs focus:ring-1 focus:ring-indigo-500 outline-none resize-none`} placeholder="Explain what prompted this decision and how it affects this student..." value={actionJustification} onChange={(e) => setActionJustification(e.target.value)} />
                 </div>
                 <label className={`flex items-start gap-3 p-4 rounded-xl border ${interlockConfirmed ? 'border-indigo-500/50 bg-indigo-500/5' : 'border-white/5'} cursor-pointer transition-all`}>
                   <input type="checkbox" className="mt-0.5" checked={interlockConfirmed} onChange={(e) => setInterlockConfirmed(e.target.checked)} />
-                  <span className="text-[11px] leading-relaxed select-none">I verify this action complies with Veridex policy and acknowledge it will be archived in the audit logs.</span>
+                  <span className="text-[11px] leading-relaxed select-none">I've reviewed this carefully. I understand this decision will be permanently logged and may affect this student's standing in Veridex.</span>
                 </label>
                 <div className="flex gap-3">
                   <button onClick={() => setPendingAction(null)} className="flex-1 py-3 text-xs font-bold opacity-50 hover:opacity-100 transition-all uppercase">Cancel</button>
                   <button onClick={executeAction} disabled={!interlockConfirmed || actionJustification.length < 5 || isUpdatingStatus !== null} className="flex-[2] bg-indigo-500 hover:bg-indigo-600 disabled:opacity-60 text-white py-3 rounded-xl font-bold text-xs uppercase transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2">
-                    {isUpdatingStatus ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />} Confirm Action
+                    {isUpdatingStatus ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />} Confirm & Submit
                   </button>
                 </div>
               </div>

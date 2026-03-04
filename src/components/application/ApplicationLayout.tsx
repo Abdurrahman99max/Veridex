@@ -17,7 +17,7 @@ export const ApplicationLayout: React.FC<ApplicationLayoutProps> = ({
   onBack
 }) => {
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center pt-8 sm:pt-20 px-4 sm:px-6 pb-20 overflow-x-hidden relative">
+    <div className="min-h-screen bg-[#EEF2F7] flex flex-col items-center pt-8 sm:pt-20 px-4 sm:px-6 pb-20 overflow-x-hidden relative">
       <div className="w-full max-w-xl mx-auto">
         {/* Navigation / Progress */}
         <div className="flex items-center justify-between mb-6 sm:mb-8 min-h-[24px]">

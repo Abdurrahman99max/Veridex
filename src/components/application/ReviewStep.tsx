@@ -37,10 +37,15 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ data, onConfirm, onBack,
     </div>
   );
 
-  const DataPoint = ({ label, value }: { label: string, value: string }) => (
+  const DataPoint = ({ label, value, truncate }: { label: string, value: string, truncate?: boolean }) => (
     <div className="flex flex-col gap-1">
       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{label}</span>
-      <span className="text-sm font-urbanist font-bold text-slate-900 leading-tight">{value || 'Not provided'}</span>
+      <span 
+        className={`text-sm font-urbanist font-bold text-slate-900 leading-tight ${truncate ? 'truncate block max-w-full' : ''}`}
+        title={truncate && value ? value : undefined}
+      >
+        {value || 'Not provided'}
+      </span>
     </div>
   );
 
@@ -59,10 +64,12 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ data, onConfirm, onBack,
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Section title="Institutional Identity" icon={User}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <DataPoint label="Full Name" value={data.fullName} />
-              <DataPoint label="University" value={data.university} />
-              <DataPoint label="Email" value={data.email} />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <DataPoint label="Full Name" value={data.fullName} />
+                <DataPoint label="University" value={data.university} />
+              </div>
+              <DataPoint label="Email" value={data.email} truncate />
               <DataPoint label="Expected Grad" value={data.gradYear} />
             </div>
           </Section>
