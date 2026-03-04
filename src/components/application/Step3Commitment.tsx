@@ -28,7 +28,7 @@ interface Step3Props {
   track: 'core' | 'prep';
 }
 
-type CommitmentType = 'core' | 'adaptive' | 'none' | null;
+type CommitmentType = 'core' | 'adaptive' | null;
 
 export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prevData, track }) => {
   const [selectedCommitment, setSelectedCommitment] = useState<CommitmentType>(null);
@@ -104,7 +104,7 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
 
   if (isPrep) {
     return (
-      <ApplicationLayout currentStep={3} totalSteps={3} title="Commitment Level" onBack={onBack}>
+      <ApplicationLayout currentStep={3} totalSteps={4} title="Commitment Level" onBack={onBack}>
         <div className="w-full space-y-8 sm:space-y-12 pb-20">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -202,7 +202,7 @@ export const Step3Commitment: React.FC<Step3Props> = ({ onComplete, onBack, prev
 
   // CORE TRACK VIEW
   return (
-    <ApplicationLayout currentStep={4} totalSteps={4} title="Work Capacity" onBack={onBack}>
+    <ApplicationLayout currentStep={4} totalSteps={5} title="Work Capacity" onBack={onBack}>
       <div className="w-full space-y-8 sm:space-y-12 pb-20">
         {/* Step badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-50 border border-teal-200 rounded-full">

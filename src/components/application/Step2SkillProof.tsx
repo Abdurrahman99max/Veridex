@@ -196,7 +196,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
 
   if (track === 'prep') {
     return (
-      <ApplicationLayout currentStep={2} totalSteps={3} title="Skill Direction" onBack={onBack}>
+      <ApplicationLayout currentStep={2} totalSteps={4} title="Skill Direction" onBack={onBack}>
         <div className="w-full space-y-8 sm:space-y-10 pb-20">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -324,7 +324,7 @@ export const Step2SkillProof: React.FC<Step2Props> = ({ onNext, onBack, skillCat
 
   // CORE TRACK VIEW 
   return (
-    <ApplicationLayout currentStep={2} totalSteps={4} title="Skill Verification" onBack={onBack}>
+    <ApplicationLayout currentStep={2} totalSteps={5} title="Skill Verification" onBack={onBack}>
       <div className="w-full space-y-12 pb-20">
         <AnimatePresence mode="wait">
           {!selectedDomain ? (

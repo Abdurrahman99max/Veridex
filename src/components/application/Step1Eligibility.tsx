@@ -146,7 +146,7 @@ export const Step1Eligibility: React.FC<EligibilityGateProps> = ({ onNext, onBac
   return (
     <ApplicationLayout 
       currentStep={1} 
-      totalSteps={selectedPath === 'prep' ? 3 : 4} 
+      totalSteps={selectedPath === 'prep' ? 4 : 5} 
       title={selectedPath === 'prep' ? "Context & Intent" : "Eligibility Protocol"} 
       onBack={handleInternalBack}
     >

@@ -19,6 +19,9 @@ interface SuccessScreenProps {
 export const SuccessScreen: React.FC<SuccessScreenProps> = ({ track, onReturn }) => {
   const [auditProgress, setAuditProgress] = useState(0);
   const [showContent, setShowContent] = useState(false);
+  const [applicationId] = useState(() => 
+    `VX-2026-${Math.random().toString(36).substring(7).toUpperCase()}`
+  );
 
   useEffect(() => {
     if (track === 'core') {
@@ -130,7 +133,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ track, onReturn })
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-left p-4 sm:p-6 bg-slate-50 rounded-2xl border border-slate-100">
                   <div className="space-y-1 min-w-0">
                     <p className="text-[9px] font-mono font-bold text-slate-400 uppercase">APPLICATION ID</p>
-                    <p className="text-xs sm:text-sm font-urbanist font-bold text-slate-900 truncate">VX-2026-{Math.random().toString(36).substring(7).toUpperCase()}</p>
+                    <p className="text-xs sm:text-sm font-urbanist font-bold text-slate-900 truncate">{applicationId}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[9px] font-mono font-bold text-slate-400 uppercase">ESTIMATED REVIEW TIME</p>
@@ -185,7 +188,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ track, onReturn })
                   onClick={onReturn}
                   className="w-full h-14 bg-slate-900 text-white rounded-xl font-urbanist font-bold hover:bg-black transition-all cursor-pointer shadow-lg shadow-slate-200 group text-sm sm:text-base"
                 >
-                  Return to Dashboard
+                  Return to Home
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>

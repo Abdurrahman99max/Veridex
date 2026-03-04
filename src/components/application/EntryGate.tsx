@@ -10,14 +10,6 @@ interface EntryGateProps {
 export const EntryGate: React.FC<EntryGateProps> = ({ onStart, onWaitlist, onBack }) => {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden">
-       {/* Font Imports */}
-      <style>
-        {`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Urbanist:wght@500;600;700&display=swap');
-          .font-urbanist { font-family: 'Urbanist', sans-serif; }
-          .font-inter { font-family: 'Inter', sans-serif; }
-        `}
-      </style>
 
       {/* Navigation - Top Bar for Back Button */}
       <nav className="absolute top-0 left-0 w-full p-6 md:p-12 z-20">

@@ -98,7 +98,7 @@ export const Step3Verification: React.FC<VerificationProps> = ({ onNext, onBack,
   return (
     <ApplicationLayout 
       currentStep={3} 
-      totalSteps={4} 
+      totalSteps={5} 
       title="Identity Verification" 
       onBack={onBack}
     >

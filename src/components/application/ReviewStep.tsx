@@ -83,7 +83,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ data, onConfirm, onBack,
 
           <Section title="Proof of Work" icon={FileText}>
             <div className="space-y-4">
-              <DataPoint label="Rationale" value={data.rationale?.substring(0, 150) + '...'} />
+              <DataPoint label="Rationale" value={data.rationale ? data.rationale.substring(0, 150) + '...' : 'Not provided'} />
               {data.proofUrl && (
                 <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-[11px] text-indigo-600 font-bold">
                   <CheckCircle2 className="w-3 h-3" /> Artifact linked successfully

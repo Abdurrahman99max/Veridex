@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'sonner@2.0.3';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Shield, 
-  Search, 
-  LayoutGrid,
-  Activity,
-  Zap,
-  ShieldCheck,
-  ShieldAlert,
-  ArrowRight
-} from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { LandingPage } from './components/landing/LandingPage';
 import { EntryGate } from './components/application/EntryGate';
 import { Step1Eligibility } from './components/application/Step1Eligibility';

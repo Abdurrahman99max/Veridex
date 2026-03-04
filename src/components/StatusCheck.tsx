@@ -25,36 +25,36 @@ interface StatusCheckProps {
 type Phase = 'intro' | 'input' | 'searching' | 'result';
 
 // Human-Centered State Mapping
-const STATE_MAP: Record<string, { label: string; description: string; color: string }> = {
+const STATE_MAP: Record<string, { label: string; description: string; colorClasses: { border: string; bg: string } }> = {
   'APPLIED': { 
     label: 'Application Received', 
     description: 'We have received your application. Our team is currently reviewing your details to ensure you are placed in the right track for your journey.',
-    color: 'amber'
+    colorClasses: { border: 'border-amber-100', bg: 'bg-amber-50/30' }
   },
   'ROUTED_TO_PREP': { 
     label: 'Preparation Program', 
     description: "You have been matched with our Preparation Program. This track is focused on helping you build the technical foundation you need to succeed in the Core track later on.",
-    color: 'amber'
+    colorClasses: { border: 'border-amber-100', bg: 'bg-amber-50/30' }
   },
   'ACCEPTED': { 
     label: 'Welcome to Veridex', 
     description: 'Great news! Your application has been approved. You now have full access to the platform. Please check your email for your next steps.',
-    color: 'emerald'
+    colorClasses: { border: 'border-emerald-100', bg: 'bg-emerald-50/30' }
   },
   'REJECTED': { 
     label: 'Review Finished', 
     description: "We have carefully reviewed your application, but we aren't able to move forward at this time. We truly appreciate the time you took to share your work with us.",
-    color: 'rose'
+    colorClasses: { border: 'border-rose-100', bg: 'bg-rose-50/30' }
   },
   'REVOKED': { 
     label: 'Account Closed', 
     description: 'Your access to Veridex has been ended due to a policy violation. If you believe this is a mistake, please reach out to our support team.',
-    color: 'rose'
+    colorClasses: { border: 'border-rose-100', bg: 'bg-rose-50/30' }
   },
   'SUSPENDED': { 
     label: 'Temporary Pause', 
     description: 'Your account is currently on a brief hold. This is a standard cooling-off period to help you realign with our community standards.',
-    color: 'rose'
+    colorClasses: { border: 'border-rose-100', bg: 'bg-rose-50/30' }
   }
 };
 
@@ -130,7 +130,7 @@ export const StatusCheck: React.FC<StatusCheckProps> = ({ onClose }) => {
     
     return (
       <div className="space-y-6">
-        <div className={`flex items-center gap-4 p-5 rounded-2xl border border-${stateInfo.color}-100 bg-${stateInfo.color}-50/30`}>
+        <div className={`flex items-center gap-4 p-5 rounded-2xl border ${stateInfo.colorClasses.border} ${stateInfo.colorClasses.bg}`}>
           <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-sm">
             {statusData.suspended ? <ShieldAlert className="w-6 h-6 text-rose-500" /> : 
              statusData.account_status === 'REVOKED' ? <ShieldX className="w-6 h-6 text-rose-600" /> :

@@ -82,6 +82,7 @@
     --color-amber-500: oklch(.769 .188 70.08);
     --color-amber-600: oklch(.666 .179 58.318);
     --color-emerald-50: oklch(.979 .021 166.113);
+    --color-emerald-100: oklch(.95 .052 163.051);
     --color-emerald-400: oklch(.765 .177 163.223);
     --color-emerald-500: oklch(.696 .17 162.48);
     --color-emerald-600: oklch(.596 .145 163.225);
@@ -1613,6 +1614,10 @@
     border-color: var(--color-emerald-50);
   }
 
+  .border-emerald-100 {
+    border-color: var(--color-emerald-100);
+  }
+
   .border-emerald-500\/20 {
     border-color: color-mix(in srgb, oklch(.696 .17 162.48) 20%, transparent);
   }
@@ -1809,6 +1814,16 @@
     background-color: var(--color-amber-50);
   }
 
+  .bg-amber-50\/30 {
+    background-color: color-mix(in srgb, oklch(.987 .022 95.277) 30%, transparent);
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-amber-50\/30 {
+      background-color: color-mix(in oklab, var(--color-amber-50) 30%, transparent);
+    }
+  }
+
   .bg-amber-500 {
     background-color: var(--color-amber-500);
   }
@@ -1902,6 +1917,16 @@
   @supports (color: color-mix(in lab, red, red)) {
     .bg-emerald-50\/10 {
       background-color: color-mix(in oklab, var(--color-emerald-50) 10%, transparent);
+    }
+  }
+
+  .bg-emerald-50\/30 {
+    background-color: color-mix(in srgb, oklch(.979 .021 166.113) 30%, transparent);
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-emerald-50\/30 {
+      background-color: color-mix(in oklab, var(--color-emerald-50) 30%, transparent);
     }
   }
 
@@ -2044,6 +2069,16 @@
   @supports (color: color-mix(in lab, red, red)) {
     .bg-rose-50\/10 {
       background-color: color-mix(in oklab, var(--color-rose-50) 10%, transparent);
+    }
+  }
+
+  .bg-rose-50\/30 {
+    background-color: color-mix(in srgb, oklch(.969 .015 12.422) 30%, transparent);
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-rose-50\/30 {
+      background-color: color-mix(in oklab, var(--color-rose-50) 30%, transparent);
     }
   }
 
