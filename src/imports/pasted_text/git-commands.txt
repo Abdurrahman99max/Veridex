@@ -1,0 +1,139 @@
+PS C:\Users\hp\OneDrive\Desktop\Veridex> git init
+Initialized empty Git repository in C:/Users/hp/OneDrive/Desktop/Veridex/.git/
+PS C:\Users\hp\OneDrive\Desktop\Veridex> git config user.email "Onitiloabdurrahman@gmail.com"
+PS C:\Users\hp\OneDrive\Desktop\Veridex> git config user.name "Abdurrahman Onitilo"
+PS C:\Users\hp\OneDrive\Desktop\Veridex> git remote add origin https://github.com/Abdurrahman99max/Veridex.git
+PS C:\Users\hp\OneDrive\Desktop\Veridex> git fetch origin
+remote: Enumerating objects: 473, done.
+remote: Counting objects: 100% (13/13), done.
+remote: Compressing objects: 100% (12/12), done.
+remote: Total 473 (delta 1), reused 0 (delta 0), pack-reused 460 (from 2)
+Receiving objects: 100% (473/473), 1.24 MiB | 640.00 KiB/s, done.
+Resolving deltas: 100% (264/264), done.
+From https://github.com/Abdurrahman99max/Veridex
+ * [new branch]      admin-system-updates -> origin/admin-system-updates
+ * [new branch]      main                 -> origin/main
+ * [new branch]      vercel/enable-vercel-speed-insights-i-deap81 -> origin/vercel/enable-vercel-speed-insights-i-deap81
+ * [new branch]      vercel/enable-vercel-web-analytics-in-6e528d -> origin/vercel/enable-vercel-web-analytics-in-6e528d
+ * [new branch]      vercel/set-up-vercel-web-analytics-in-0pia1t -> origin/vercel/set-up-vercel-web-analytics-in-0pia1t
+ * [new branch]      vercel/setup-vercel-web-analytics-for-5a6qxj -> origin/vercel/setup-vercel-web-analytics-for-5a6qxj
+ * [new branch]      vercel/vercel-web-analytics-to-projec-138hwl -> origin/vercel/vercel-web-analytics-to-projec-138hwl
+PS C:\Users\hp\OneDrive\Desktop\Veridex> git checkout admin-system-updates
+error: The following untracked working tree files would be overwritten by checkout:
+        .npmrc
+        README.md
+        index.html
+        package.json
+        src/App.tsx
+        src/Attributions.md
+        src/assets/bfe4a23c2f7ade9ccf466d9d67ff1ed823aa6839.png
+        src/components/AdminHub.tsx
+        src/components/AdminLogin.tsx
+        src/components/StatusCheck.tsx
+        src/components/application/ApplicationLayout.tsx
+        src/components/application/EntryGate.tsx
+        src/components/application/GuidancePopover.tsx
+        src/components/application/NextStepConfirmation.tsx
+        src/components/application/ReviewStep.tsx
+        src/components/application/Step1Eligibility.tsx
+        src/components/application/Step2SkillProof.tsx
+        src/components/application/Step3Availability.tsx
+        src/components/application/Step3Commitment.tsx
+        src/components/application/Step3Verification.tsx
+        src/components/application/SubmissionConfirmation.tsx
+        src/components/application/SuccessScreen.tsx
+        src/components/figma/ImageWithFallback.tsx
+        src/components/landing/Hero.tsx
+        src/components/landing/HowItWorks.tsx
+        src/components/landing/LandingPage.tsx
+        src/components/landing/StarBorder.tsx
+        src/components/landing/WhatWeLookFor.tsx
+        src/components/landing/WhoIsThisFor.tsx
+        src/components/layout/Footer.tsx
+        src/components/ui/accordion.tsx
+        src/components/ui/alert-dialog.tsx
+        src/components/ui/alert.tsx
+        src/components/ui/aspect-ratio.tsx
+        src/components/ui/avatar.tsx
+        src/components/ui/badge.tsx
+        src/components/ui/breadcrumb.tsx
+        src/components/ui/button.tsx
+        src/components/ui/calendar.tsx
+        src/components/ui/card.tsx
+        src/components/ui/carousel.tsx
+        src/components/ui/chart.tsx
+        src/components/ui/checkbox.tsx
+        src/components/ui/collapsible.tsx
+        src/components/ui/command.tsx
+        src/components/ui/context-menu.tsx
+        src/components/ui/dialog.tsx
+        src/components/ui/drawer.tsx
+        src/components/ui/dropdown-menu.tsx
+        src/components/ui/form.tsx
+        src/components/ui/hover-card.tsx
+        src/components/ui/input-otp.tsx
+        src/components/ui/input.tsx
+        src/components/ui/label.tsx
+        src/components/ui/menubar.tsx
+        src/components/ui/navigation-menu.tsx
+        src/components/ui/pagination.tsx
+        src/components/ui/popover.tsx
+        src/components/ui/progress.tsx
+        src/components/ui/radio-group.tsx
+        src/components/ui/resizable.tsx
+        src/components/ui/scroll-area.tsx
+        src/components/ui/select.tsx
+        src/components/ui/separator.tsx
+        src/components/ui/sheet.tsx
+        src/components/ui/sidebar.tsx
+        src/components/ui/skeleton.tsx
+        src/components/ui/slider.tsx
+        src/components/ui/sonner.tsx
+        src/components/ui/switch.tsx
+        src/components/ui/table.tsx
+        src/components/ui/tabs.tsx
+        src/components/ui/textarea.tsx
+        src/components/ui/toggle-group.tsx
+        src/components/ui/toggle.tsx
+        src/components/ui/tooltip.tsx
+        src/components/ui/use-mobile.ts
+        src/components/ui/utils.ts
+        src/guidelines/Guidelines.md
+        src/imports/50.tsx
+        src/imports/Veridex.tsx
+        src/imports/svg-64pcybd5do.ts
+        src/imports/svg-ahcr5.tsx
+        src/imports/svg-xljsoin0m5.ts
+        src/index.css
+        src/main.tsx
+        src/styles/globals.css
+        src/supabase/functions/server/index.tsx
+        src/supabase/functions/server/kv_store.tsx
+        src/utils/supabase/info.tsx
+        src/vercel.json
+        vite.config.ts
+Please move or remove them before you switch branches.
+Aborting
+PS C:\Users\hp\OneDrive\Desktop\Veridex> # Add the two files we need to push
+PS C:\Users\hp\OneDrive\Desktop\Veridex> git add components/AdminHub.tsx
+fatal: pathspec 'components/AdminHub.tsx' did not match any files
+PS C:\Users\hp\OneDrive\Desktop\Veridex> git add supabase/functions/server/index.tsx
+fatal: pathspec 'supabase/functions/server/index.tsx' did not match any files
+PS C:\Users\hp\OneDrive\Desktop\Veridex>
+PS C:\Users\hp\OneDrive\Desktop\Veridex> # Commit
+PS C:\Users\hp\OneDrive\Desktop\Veridex> git commit -m "feat: Add AdminHub component and server endpoints for role-based admin system"
+On branch master
+
+Initial commit
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        .npmrc
+        README.md
+        index.html
+        package.json
+        src/
+        vite.config.ts
+
+nothing added to commit but untracked files present (use "git add" to track)
+PS C:\Users\hp\OneDrive\Desktop\Veridex>
