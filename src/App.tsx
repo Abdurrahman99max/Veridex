@@ -21,11 +21,9 @@ import { projectId, publicAnonKey } from './utils/supabase/info';
 type View = 'landing' | 'gate' | 'application' | 'admin' | 'success' | 'duplicate' | 'seeder' | 'design-system';
 
 export default function App() {
-  // 1. State Declarations
-  const [view, setView] = useState<View>(() => {
-    const saved = localStorage.getItem('vdx_app_draft_view');
-    return (saved === 'application') ? 'application' : 'landing';
-  });
+  // 1. State Declarations — HOME ALWAYS FIRST (per spec)
+  const [view, setView] = useState<View>('landing');
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
   const [showStatusCheck, setShowStatusCheck] = useState(false);
   const [duplicateEmail, setDuplicateEmail] = useState('');
   const [formData, setFormData] = useState<any>(() => {
@@ -73,16 +71,26 @@ export default function App() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    // Priority: explicit routes override home; draft is offered via banner, not auto-redirect
     if (params.has('dex')) {
       setView('admin');
+      return;
     }
     if (params.has('seed')) {
       setView('seeder');
+      return;
     }
     if (params.has('design') || window.location.hash === '#design-system') {
       setView('design-system');
+      return;
     }
-  }, []);
+    // Always land on home first — draft restore is opt-in (see resume banner in LandingPage)
+    const savedView = localStorage.getItem('vdx_app_draft_view');
+    if (savedView === 'application' && !hasRestoredDraft) {
+      // keep on landing, but flag that draft exists for LandingPage to show "Resume application" CTA
+      setHasRestoredDraft(false);
+    }
+  }, [hasRestoredDraft]);
 
   // 3. Handlers
   const handleApply = () => {
@@ -261,6 +269,8 @@ export default function App() {
   };
 
   const renderView = () => {
+    const hasDraft = typeof window !== 'undefined' && !!localStorage.getItem('vdx_app_draft_view');
+    const handleResumeDraft = () => { setHasRestoredDraft(true); setView('application'); };
     switch (view) {
       case 'landing':
         return (
@@ -269,6 +279,8 @@ export default function App() {
               onApply={handleApply} 
               onWaitlist={handleWaitlist} 
               onCheckStatus={() => setShowStatusCheck(true)} 
+              hasDraft={hasDraft}
+              onResumeDraft={handleResumeDraft}
             />
             <AnimatePresence mode="wait">
               {showStatusCheck && (
@@ -370,6 +382,8 @@ export default function App() {
             onApply={handleApply} 
             onWaitlist={handleWaitlist} 
             onCheckStatus={() => setShowStatusCheck(true)} 
+            hasDraft={hasDraft}
+            onResumeDraft={handleResumeDraft}
           />
         );
     }
