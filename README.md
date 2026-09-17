@@ -9,3 +9,4 @@
 
   Run `npm run dev` to start the development server.
   
+<!-- mundane push 2026-09-17 14:46:19 — Vercel redeploy check -->
