@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { EvaluationPanel } from './admin/EvaluationPanel';
 import {
   Select,
   SelectContent,
@@ -150,6 +151,7 @@ export function AdminHub({ token, adminEmail, onLogout }: AdminHubProps) {
   const [interlockConfirmed, setInterlockConfirmed] = useState(false);
   const [actionJustification, setActionJustification] = useState('');
   
+  const [showEvaluation, setShowEvaluation] = useState(false);
   // Policy Change State
   const [showPolicyProposal, setShowPolicyProposal] = useState(false);
   const [policyChangeType, setPolicyChangeType] = useState<'strike' | 'transition'>('strike');
@@ -1292,11 +1294,25 @@ export function AdminHub({ token, adminEmail, onLogout }: AdminHubProps) {
                     </div>
 
                     <div className="space-y-3">
-                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Decision Center</div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <button onClick={() => initiateAction({ id: selectedApplicant.id, type: 'status_update', newState: 'verified', tier: tempTier, feedback: tempFeedback, label: 'Grant Full Access', warning: 'This will formally admit the student into the Veridex registry and trigger notification events.' })} disabled={selectedApplicant.application_state === 'ACCEPTED'} className={cn("flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase border transition-all", selectedApplicant.application_state === 'ACCEPTED' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500 hover:text-white")}><ShieldCheck className="w-3.5 h-3.5" /> Approve</button>
-                        <button onClick={() => initiateAction({ id: selectedApplicant.id, type: 'status_update', newState: 'flagged', feedback: tempFeedback, label: 'Deny Enrollment', warning: 'The application will be rejected. This action is auditable and final for this submission.' })} disabled={selectedApplicant.application_state === 'REJECTED'} className={cn("flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase border transition-all", selectedApplicant.application_state === 'REJECTED' ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20 hover:bg-rose-500 hover:text-white")}><ShieldAlert className="w-3.5 h-3.5" /> Decline</button>
-                      </div>
+                      <div className="text-[10px] uppercase tracking-widest font-bold opacity-30">Decision Center — Login → Evaluate → Submit</div>
+                      {selectedApplicant.application_state === 'APPLIED' ? (
+                        <>
+                          {!showEvaluation ? (
+                            <button onClick={() => setShowEvaluation(true)} className="w-full py-3.5 rounded-xl bg-[#08307F] text-white font-bold text-xs uppercase flex items-center justify-center gap-2 hover:bg-[#041D50] transition"><Award className="w-4 h-4" /> Evaluate Submission</button>
+                          ) : (
+                            <EvaluationPanel applicant={selectedApplicant} adminEmail={adminEmail} projectId={projectId} publicAnonKey={publicAnonKey} onClose={() => setShowEvaluation(false)} onEvaluated={() => { setShowEvaluation(false); fetchAllData(); setSelectedId(null); }} />
+                          )}
+                          <div className="grid grid-cols-2 gap-3 opacity-60">
+                            <button onClick={() => initiateAction({ id: selectedApplicant.id, type: 'status_update', newState: 'verified', tier: tempTier, feedback: tempFeedback, label: 'Grant Full Access (Quick)', warning: 'Bypass rubric — use Evaluate above for scored decision.' })} className="py-2.5 rounded-xl font-bold text-[10px] uppercase border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500 hover:text-white">Quick Approve</button>
+                            <button onClick={() => initiateAction({ id: selectedApplicant.id, type: 'status_update', newState: 'flagged', feedback: tempFeedback, label: 'Deny (Quick)', warning: 'Quick reject without rubric.' })} className="py-2.5 rounded-xl font-bold text-[10px] uppercase border bg-rose-500/10 text-rose-500 border-rose-500/20 hover:bg-rose-500 hover:text-white">Quick Decline</button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3">
+                          <button onClick={() => initiateAction({ id: selectedApplicant.id, type: 'status_update', newState: 'verified', tier: tempTier, feedback: tempFeedback, label: 'Grant Full Access', warning: 'This will formally admit the student into the Veridex registry and trigger notification events.' })} disabled={selectedApplicant.application_state === 'ACCEPTED'} className={cn("flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase border transition-all", selectedApplicant.application_state === 'ACCEPTED' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500 hover:text-white")}><ShieldCheck className="w-3.5 h-3.5" /> Approve</button>
+                          <button onClick={() => initiateAction({ id: selectedApplicant.id, type: 'status_update', newState: 'flagged', feedback: tempFeedback, label: 'Deny Enrollment', warning: 'The application will be rejected. This action is auditable and final for this submission.' })} disabled={selectedApplicant.application_state === 'REJECTED'} className={cn("flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase border transition-all", selectedApplicant.application_state === 'REJECTED' ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20 hover:bg-rose-500 hover:text-white")}><ShieldAlert className="w-3.5 h-3.5" /> Decline</button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-3 pt-4 border-t border-white/5">

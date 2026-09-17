@@ -429,6 +429,60 @@ app.post(`${prefix}/admin/execute-transition`, async (c) => {
   }
 });
 
+// 3b. Admin: Evaluate (rubric → score → transition, login→evaluate→submit)
+app.post(`${prefix}/admin/evaluate`, async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization');
+    if (!authHeader) return c.json({ error: 'Unauthorized' }, 401);
+    const { applicationId, operator, scores, notes, reliability_score, subScores, tier, decision, idempotencyKey } = await c.req.json();
+    if (!applicationId || !operator || !scores || !decision) throw new Error('Missing fields: applicationId, operator, scores, decision');
+
+    // Idempotency
+    const cached = await checkIdempotency(idempotencyKey || '');
+    if (cached) return c.json(cached.response);
+
+    const applicant = await kv.get(`applicant:${applicationId}`);
+    if (!applicant) throw new Error('Applicant not found');
+    if (applicant.application_state !== 'APPLIED') throw new Error(`Only APPLIED can be evaluated (current ${applicant.application_state})`);
+
+    // Validate notes for non-accept
+    if ((decision === 'REJECTED' || decision === 'ROUTED_TO_PREP') && (!notes || notes.trim().length < 10)) {
+      throw new Error('Notes ≥10 chars required for REJECT / ROUTED_TO_PREP');
+    }
+
+    // Persist evaluation snapshot
+    const evaluation = {
+      id: `EVAL-${Date.now()}`,
+      applicationId,
+      evaluator: operator,
+      scores,
+      reliability_score,
+      subScores,
+      tier,
+      decision,
+      notes: notes || '',
+      evaluated_at: new Date().toISOString(),
+    };
+    await kv.set(`evaluation:${applicationId}:${evaluation.id}`, evaluation);
+    // Also denormalize latest onto applicant for quick display
+    applicant.evaluation = evaluation;
+    applicant.reliability_score = reliability_score;
+    applicant.reliabilityTier = tier as ReliabilityTier;
+    applicant.subScores = subScores;
+    await kv.set(`applicant:${applicationId}`, applicant);
+
+    // Map decision to state transition
+    const targetState: ApplicationState = decision === 'ACCEPTED' ? 'ACCEPTED' : decision === 'ROUTED_TO_PREP' ? 'ROUTED_TO_PREP' : 'REJECTED';
+    const result = await executeTransitionInternal(applicationId, targetState, notes || `Evaluated ${reliability_score}% → ${decision}`, operator, true, `${idempotencyKey}:transition`);
+
+    const response = { success: true, evaluation, transition: result };
+    await saveIdempotency(idempotencyKey || '', response);
+    return c.json(response);
+  } catch (err) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
 // 4. Admin: Issue Strike (RPC)
 app.post(`${prefix}/admin/issue-strike`, async (c) => {
   try {
