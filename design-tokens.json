@@ -1,0 +1,535 @@
+{
+  "$schema": "https://tr.designtokens.org/format/2.0.0/schema.json",
+  "$description": "Veridex Design System Tokens — Single source of truth for Figma and web",
+  "color": {
+    "brand": {
+      "$description": "Core Veridex brand colors",
+      "green": {
+        "$type": "color",
+        "$value": "#0be149",
+        "$description": "Primary spring green — represents growth and verification"
+      },
+      "green-light": {
+        "$type": "color",
+        "$value": "#d4fce3"
+      },
+      "green-dark": {
+        "$type": "color",
+        "$value": "#07a334"
+      },
+      "navy": {
+        "$type": "color",
+        "$value": "#08307f",
+        "$description": "Primary navy blue — represents trust and authority"
+      },
+      "navy-light": {
+        "$type": "color",
+        "$value": "#1a4599"
+      },
+      "navy-dark": {
+        "$type": "color",
+        "$value": "#041d50"
+      },
+      "white": {
+        "$type": "color",
+        "$value": "#ffffff"
+      }
+    },
+    "grey": {
+      "$description": "Neutral greyscale palette",
+      "50": {
+        "$type": "color",
+        "$value": "#f8f9fb"
+      },
+      "100": {
+        "$type": "color",
+        "$value": "#f0f2f6"
+      },
+      "200": {
+        "$type": "color",
+        "$value": "#e2e6ed"
+      },
+      "300": {
+        "$type": "color",
+        "$value": "#c8cfdb"
+      },
+      "400": {
+        "$type": "color",
+        "$value": "#9aaabb"
+      },
+      "500": {
+        "$type": "color",
+        "$value": "#6b7f94"
+      },
+      "600": {
+        "$type": "color",
+        "$value": "#4a5d70"
+      },
+      "700": {
+        "$type": "color",
+        "$value": "#2e3f52"
+      },
+      "800": {
+        "$type": "color",
+        "$value": "#1a2a3a"
+      },
+      "900": {
+        "$type": "color",
+        "$value": "#0d1825"
+      }
+    },
+    "status": {
+      "$description": "Status and feedback colors",
+      "verified": {
+        "$type": "color",
+        "$value": "#0be149",
+        "$description": "Student verified/approved state"
+      },
+      "pending": {
+        "$type": "color",
+        "$value": "#f59e0b",
+        "$description": "Application pending review"
+      },
+      "rejected": {
+        "$type": "color",
+        "$value": "#d4183d",
+        "$description": "Application rejected/failed"
+      },
+      "info": {
+        "$type": "color",
+        "$value": "#3b82f6",
+        "$description": "Informational states"
+      }
+    },
+    "semantic": {
+      "$description": "Semantic UI color tokens (light mode)",
+      "background": {
+        "$type": "color",
+        "$value": "#ffffff"
+      },
+      "foreground": {
+        "$type": "color",
+        "$value": "#0d1825"
+      },
+      "card": {
+        "$type": "color",
+        "$value": "#ffffff"
+      },
+      "card-foreground": {
+        "$type": "color",
+        "$value": "#0d1825"
+      },
+      "primary": {
+        "$type": "color",
+        "$value": "#08307f"
+      },
+      "primary-foreground": {
+        "$type": "color",
+        "$value": "#ffffff"
+      },
+      "secondary": {
+        "$type": "color",
+        "$value": "#f0f2f6"
+      },
+      "secondary-foreground": {
+        "$type": "color",
+        "$value": "#08307f"
+      },
+      "muted": {
+        "$type": "color",
+        "$value": "#f0f2f6"
+      },
+      "muted-foreground": {
+        "$type": "color",
+        "$value": "#6b7f94"
+      },
+      "accent": {
+        "$type": "color",
+        "$value": "#0be149"
+      },
+      "accent-foreground": {
+        "$type": "color",
+        "$value": "#08307f"
+      },
+      "destructive": {
+        "$type": "color",
+        "$value": "#d4183d"
+      },
+      "destructive-foreground": {
+        "$type": "color",
+        "$value": "#ffffff"
+      },
+      "border": {
+        "$type": "color",
+        "$value": "#e2e6ed"
+      },
+      "input-background": {
+        "$type": "color",
+        "$value": "#f8f9fb"
+      },
+      "ring": {
+        "$type": "color",
+        "$value": "#0be149"
+      }
+    },
+    "semantic-dark": {
+      "$description": "Semantic UI color tokens (dark mode)",
+      "background": {
+        "$type": "color",
+        "$value": "#0d1825"
+      },
+      "foreground": {
+        "$type": "color",
+        "$value": "#f0f2f6"
+      },
+      "card": {
+        "$type": "color",
+        "$value": "#1a2a3a"
+      },
+      "card-foreground": {
+        "$type": "color",
+        "$value": "#f0f2f6"
+      },
+      "primary": {
+        "$type": "color",
+        "$value": "#0be149"
+      },
+      "primary-foreground": {
+        "$type": "color",
+        "$value": "#0d1825"
+      },
+      "secondary": {
+        "$type": "color",
+        "$value": "#2e3f52"
+      },
+      "secondary-foreground": {
+        "$type": "color",
+        "$value": "#f0f2f6"
+      },
+      "muted": {
+        "$type": "color",
+        "$value": "#2e3f52"
+      },
+      "muted-foreground": {
+        "$type": "color",
+        "$value": "#9aaabb"
+      },
+      "border": {
+        "$type": "color",
+        "$value": "#2e3f52"
+      },
+      "input-background": {
+        "$type": "color",
+        "$value": "#1a2a3a"
+      }
+    },
+    "chart": {
+      "$description": "Data visualization color scale",
+      "1": {
+        "$type": "color",
+        "$value": "#0be149"
+      },
+      "2": {
+        "$type": "color",
+        "$value": "#08307f"
+      },
+      "3": {
+        "$type": "color",
+        "$value": "#3b82f6"
+      },
+      "4": {
+        "$type": "color",
+        "$value": "#f59e0b"
+      },
+      "5": {
+        "$type": "color",
+        "$value": "#d4183d"
+      }
+    }
+  },
+  "typography": {
+    "$description": "Typography system based on Urbanist",
+    "font-family": {
+      "base": {
+        "$type": "fontFamily",
+        "$value": "Urbanist, sans-serif",
+        "$description": "Primary typeface for all text"
+      }
+    },
+    "font-weight": {
+      "normal": {
+        "$type": "fontWeight",
+        "$value": 400
+      },
+      "medium": {
+        "$type": "fontWeight",
+        "$value": 500
+      },
+      "bold": {
+        "$type": "fontWeight",
+        "$value": 700
+      }
+    },
+    "font-size": {
+      "xs": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "sm": {
+        "$type": "dimension",
+        "$value": "14px"
+      },
+      "base": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "lg": {
+        "$type": "dimension",
+        "$value": "18px"
+      },
+      "xl": {
+        "$type": "dimension",
+        "$value": "20px"
+      },
+      "2xl": {
+        "$type": "dimension",
+        "$value": "24px"
+      },
+      "3xl": {
+        "$type": "dimension",
+        "$value": "30px"
+      },
+      "4xl": {
+        "$type": "dimension",
+        "$value": "36px"
+      }
+    },
+    "line-height": {
+      "tight": {
+        "$type": "number",
+        "$value": 1.25
+      },
+      "snug": {
+        "$type": "number",
+        "$value": 1.4
+      },
+      "normal": {
+        "$type": "number",
+        "$value": 1.5
+      },
+      "relaxed": {
+        "$type": "number",
+        "$value": 1.625
+      }
+    },
+    "letter-spacing": {
+      "tight": {
+        "$type": "dimension",
+        "$value": "-0.025em"
+      },
+      "normal": {
+        "$type": "dimension",
+        "$value": "0em"
+      },
+      "wide": {
+        "$type": "dimension",
+        "$value": "0.025em"
+      }
+    }
+  },
+  "spacing": {
+    "$description": "Consistent spacing scale for layout and components",
+    "0": {
+      "$type": "dimension",
+      "$value": "0px"
+    },
+    "1": {
+      "$type": "dimension",
+      "$value": "4px"
+    },
+    "2": {
+      "$type": "dimension",
+      "$value": "8px"
+    },
+    "3": {
+      "$type": "dimension",
+      "$value": "12px"
+    },
+    "4": {
+      "$type": "dimension",
+      "$value": "16px"
+    },
+    "5": {
+      "$type": "dimension",
+      "$value": "20px"
+    },
+    "6": {
+      "$type": "dimension",
+      "$value": "24px"
+    },
+    "8": {
+      "$type": "dimension",
+      "$value": "32px"
+    },
+    "10": {
+      "$type": "dimension",
+      "$value": "40px"
+    },
+    "12": {
+      "$type": "dimension",
+      "$value": "48px"
+    },
+    "16": {
+      "$type": "dimension",
+      "$value": "64px"
+    },
+    "20": {
+      "$type": "dimension",
+      "$value": "80px"
+    },
+    "24": {
+      "$type": "dimension",
+      "$value": "96px"
+    }
+  },
+  "radius": {
+    "$description": "Border radius tokens",
+    "none": {
+      "$type": "dimension",
+      "$value": "0px"
+    },
+    "sm": {
+      "$type": "dimension",
+      "$value": "4px"
+    },
+    "md": {
+      "$type": "dimension",
+      "$value": "6px"
+    },
+    "lg": {
+      "$type": "dimension",
+      "$value": "8px"
+    },
+    "xl": {
+      "$type": "dimension",
+      "$value": "12px"
+    },
+    "2xl": {
+      "$type": "dimension",
+      "$value": "16px"
+    },
+    "full": {
+      "$type": "dimension",
+      "$value": "9999px"
+    }
+  },
+  "shadow": {
+    "$description": "Elevation shadow system",
+    "sm": {
+      "$type": "shadow",
+      "$value": {
+        "offsetX": "0px",
+        "offsetY": "1px",
+        "blur": "2px",
+        "spread": "0px",
+        "color": "rgba(0, 0, 0, 0.05)"
+      }
+    },
+    "md": {
+      "$type": "shadow",
+      "$value": {
+        "offsetX": "0px",
+        "offsetY": "4px",
+        "blur": "6px",
+        "spread": "-1px",
+        "color": "rgba(0, 0, 0, 0.1)"
+      }
+    },
+    "lg": {
+      "$type": "shadow",
+      "$value": {
+        "offsetX": "0px",
+        "offsetY": "10px",
+        "blur": "15px",
+        "spread": "-3px",
+        "color": "rgba(0, 0, 0, 0.1)"
+      }
+    },
+    "xl": {
+      "$type": "shadow",
+      "$value": {
+        "offsetX": "0px",
+        "offsetY": "20px",
+        "blur": "25px",
+        "spread": "-5px",
+        "color": "rgba(0, 0, 0, 0.1)"
+      }
+    }
+  },
+  "border-width": {
+    "$description": "Standard border widths",
+    "none": {
+      "$type": "dimension",
+      "$value": "0px"
+    },
+    "thin": {
+      "$type": "dimension",
+      "$value": "1px"
+    },
+    "medium": {
+      "$type": "dimension",
+      "$value": "2px"
+    },
+    "thick": {
+      "$type": "dimension",
+      "$value": "4px"
+    }
+  },
+  "opacity": {
+    "$description": "Opacity scale for UI states",
+    "0": {
+      "$type": "number",
+      "$value": 0
+    },
+    "10": {
+      "$type": "number",
+      "$value": 0.1
+    },
+    "20": {
+      "$type": "number",
+      "$value": 0.2
+    },
+    "30": {
+      "$type": "number",
+      "$value": 0.3
+    },
+    "40": {
+      "$type": "number",
+      "$value": 0.4
+    },
+    "50": {
+      "$type": "number",
+      "$value": 0.5
+    },
+    "60": {
+      "$type": "number",
+      "$value": 0.6
+    },
+    "70": {
+      "$type": "number",
+      "$value": 0.7
+    },
+    "80": {
+      "$type": "number",
+      "$value": 0.8
+    },
+    "90": {
+      "$type": "number",
+      "$value": 0.9
+    },
+    "100": {
+      "$type": "number",
+      "$value": 1
+    }
+  }
+}

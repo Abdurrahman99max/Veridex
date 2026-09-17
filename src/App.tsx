@@ -15,9 +15,10 @@ import { StatusCheck } from './components/StatusCheck';
 import { AdminLogin } from './components/AdminLogin';
 import { AdminHub } from './components/AdminHub';
 import { DemoDataSeeder } from './components/DemoDataSeeder';
+import { DesignSystemPage } from './components/design-system/DesignSystemPage';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 
-type View = 'landing' | 'gate' | 'application' | 'admin' | 'success' | 'duplicate' | 'seeder';
+type View = 'landing' | 'gate' | 'application' | 'admin' | 'success' | 'duplicate' | 'seeder' | 'design-system';
 
 export default function App() {
   // 1. State Declarations
@@ -77,6 +78,9 @@ export default function App() {
     }
     if (params.has('seed')) {
       setView('seeder');
+    }
+    if (params.has('design') || window.location.hash === '#design-system') {
+      setView('design-system');
     }
   }, []);
 
@@ -356,6 +360,9 @@ export default function App() {
           );
         }
         return <DemoDataSeeder token={adminAuth.token} adminEmail={adminAuth.email} onLogout={() => setAdminAuth(null)} />;
+
+      case 'design-system':
+        return <DesignSystemPage />;
 
       default:
         return (
